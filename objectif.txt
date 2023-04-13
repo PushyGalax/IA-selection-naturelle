@@ -1,0 +1,9 @@
+IA qui survie, copié collé du test d'ia selec nat de laupok sur vidéo ia mario
+changement des graphismes c'est tout
+code obj, chaque ia est un objet avec des val différentes
+commencer par faire l'objet survivant puis monstres puis fruits
+puis ensuite coder le concepte de génération et d'enfant, get le meilleur
+puis le partager avec les autres.
+
+Si on a le temps, implémentation du sys de différent type
+celle qui est débile, celle qui esquive tout, et cellez qui cherche de la bouffe
