@@ -43,7 +43,7 @@ class Monstre(pg.sprite.Sprite):
     def __init__(self) -> None:             #les monstres n'évolue pas ils font 1 de dégats et ils ont vitesse const et champ de vision const
         super().__init__()                  #val à changer
         self.VITESSE = 20
-        self.CHAMPVISION = 35
+        self.CHAMPVISION = 1000
         self.vector = pg.Vector2(0,0)
         self.image = pg.image.load('ball.png')
         self.rect = self.image.get_rect()
@@ -51,10 +51,10 @@ class Monstre(pg.sprite.Sprite):
         self.state = "LURKING"
 
     def dist_sprites(self, sprite):
-        return sqrt((self.rect.x - sprite.rect.x)**2 + (self.rect.y - sprite.rect.y)**2)
+        return sqrt((self.rect.center[0] - sprite.rect.center[0])**2 + (self.rect.center[1] - sprite.rect.center[1])**2)
 
     def direction_sprites(self, sprite):
-        vec = pg.Vector2(sprite.rect.x - self.rect.x, sprite.rect.y - self.rect.y)
+        vec = pg.Vector2(self.rect.center[0]-sprite.rect.center[0], self.rect.center[1]-sprite.rect.center[1])
         norme_vec = self.dist_sprites(sprite)
         return pg.Vector2(vec.x/norme_vec, vec.y/norme_vec)
 
@@ -69,7 +69,7 @@ class Monstre(pg.sprite.Sprite):
                 break
 
     def chase(self):
-        self.vector = self.direction_sprites(self.target)
+        self.vector = self.direction_sprites(self.target)*2
         self.update()
         if self.dist_sprites(self.target)>self.CHAMPVISION:
             self.target = None
@@ -120,7 +120,7 @@ for i in range(1):
     group_monstre.add(new_monstre)
 
 ia_group = pg.sprite.Group()
-for joueur in range(20):
+for joueur in range(1):
     new_player = IA(None, 15, 3, 25, 3, None)
     ia_group.add(new_player)
 
