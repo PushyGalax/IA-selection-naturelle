@@ -5,7 +5,7 @@ from math import cos, sin
 
 #prg
 class IA(pg.sprite.Sprite):
-    def __init__(self, vector, vitesse, taille, champvision, pv) -> None:             #je pense an stat il faut taille, vitesse, pv, champ de vision
+    def __init__(self, vector, vitesse, taille, champvision, pv, timer) -> None:             #je pense an stat il faut taille, vitesse, pv, champ de vision
         #var pygame
         pg.sprite.Sprite.__init__(self)
         self.image, self.rect = pg.load_png('ball.png')
@@ -18,6 +18,7 @@ class IA(pg.sprite.Sprite):
         self.taille = taille
         self.champvision = champvision
         self.pv = pv
+        self.timer = timer
 
     def __str__(self) -> str:               #print des stat de l'objet
         return f"{self.vitesse} {self.taille} {self.champvision}"
