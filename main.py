@@ -5,10 +5,11 @@ from math import cos, sin
 
 #prg
 class IA(pg.sprite.Sprite):
-    def __init__(self, vector, vitesse, taille, champvision, pv, timer) -> None:             #je pense an stat il faut taille, vitesse, pv, champ de vision
+    def __init__(self, vector, vitesse, taille, champvision, pv, timer) -> None:
         #var pygame
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.image.load('victime.png')
+        self.image = pg.image.load('victime.bmp')
+        self.image.set_colorkey((247, 247, 247))
         self.screen = pg.display.get_surface()
         self.size = self.image.get_size()
         self.image = pg.transform.scale(self.image, (self.size[0]/taille, self.size[1]/taille))
@@ -86,7 +87,7 @@ for i in range(1):
 
 ia_group = pg.sprite.Group()
 for joueur in range(20):
-    new_player = IA(None, 15, 3, 25, 3, None)
+    new_player = IA(None, 15, 1, 25, 3, None)
     ia_group.add(new_player)
 
 while running:
