@@ -1,7 +1,7 @@
 #import
 import pygame as pg
 from random import *
-from math import cos, sin
+from math import cos, sin, sqrt
 
 #prg
 class IA(pg.sprite.Sprite):
@@ -16,8 +16,8 @@ class IA(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.area = self.screen.get_rect()
         self.vector = vector
+
         self.rect.center = [randint(0,1280),randint(0,720)]
-        
         #var ia
         self.vitesse = vitesse
         self.taille = taille
@@ -45,8 +45,43 @@ class Monstre(pg.sprite.Sprite):
         super().__init__()                  #val à changer
         self.VITESSE = 20
         self.CHAMPVISION = 35
+        self.vector = pg.Vector2(0,0)
         self.image = pg.image.load('ball.png')
         self.rect = self.image.get_rect()
+        self.target = None
+        self.state = "LURKING"
+
+    def dist_sprites(self, sprite):
+        return sqrt((self.rect.x - sprite.rect.x)**2 + (self.rect.y - sprite.rect.y)**2)
+
+    def direction_sprites(self, sprite):
+        vec = pg.Vector2(sprite.rect.x - self.rect.x, sprite.rect.y - self.rect.y)
+        norme_vec = self.dist_sprites(sprite)
+        return pg.Vector2(vec.x/norme_vec, vec.y/norme_vec)
+
+    def lurk(self):
+        pass
+
+    def research(self, ia):
+        for spri in ia.sprites():
+            if self.dist_sprites(spri)<self.CHAMPVISION:
+                self.target = spri
+                self.state = "CHASING"
+                break
+
+    def chase(self):
+        self.vector = self.direction_sprites(self.target)
+        self.update()
+        if self.dist_sprites(self.target)>self.CHAMPVISION:
+            self.target = None
+            self.state = "LURKING"
+
+    def manage_states(self, ia):
+        if self.state == "LURKING":
+            self.lurk()
+            self.research(ia)
+        elif self.state == "CHASING":
+            self.chase()
 
     def calcnewpos(self, rect, vector):
         (angle,z) = vector
@@ -54,7 +89,7 @@ class Monstre(pg.sprite.Sprite):
         return rect.move(dx,dy)
 
     def update(self):
-        newpos = self.calcnewpos(self.rect,self.vector)
+        newpos = self.calcnewpos(self.rect, self.vector)
         self.rect = newpos
 
 
@@ -95,10 +130,14 @@ while running:
         if event.type == pg.QUIT:
             running = False
     
+    group_monstre.sprites()[0].manage_states(ia_group)
+
     screen.blit(text, textRect)
     pg.display.flip()
+
     group_monstre.draw(screen)
     ia_group.draw(screen)
+
     clock.tick(60)
 
 pg.quit()
