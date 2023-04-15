@@ -8,10 +8,12 @@ class IA(pg.sprite.Sprite):
     def __init__(self, vector, vitesse, taille, champvision, pv, timer) -> None:             #je pense an stat il faut taille, vitesse, pv, champ de vision
         #var pygame
         pg.sprite.Sprite.__init__(self)
-        self.image, self.rect = pg.load_png('ball.png')
+        self.image = pg.image.load('ball.png')
+        self.rect = self.image.get_rect()
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
         self.vector = vector
+        self.rect.center = [randint(0,1280),randint(0,720)]
         
         #var ia
         self.vitesse = vitesse
@@ -21,11 +23,11 @@ class IA(pg.sprite.Sprite):
         self.timer = timer
 
     def __str__(self) -> str:               #print des stat de l'objet
-        return f"{self.vitesse} {self.taille} {self.champvision}"
+        return f"{self.vitesse} {self.taille} {self.champvision} {self.timer} {self.pv}"
     
     def calcnewpos(self,rect,vector):
         (angle,z) = vector
-        (dx,dy) = (z*math.cos(angle),z*math.sin(angle))
+        (dx,dy) = (z*cos(angle),z*sin(angle))
         return rect.move(dx,dy)
 
     def update(self):
@@ -65,6 +67,11 @@ text = font.render('Show stat', True, (255,255,255), (0,0,0))
 textRect = text.get_rect()
 textRect.center = (1200, 25)
 
+ia_group = pg.sprite.Group()
+for joueur in range(20):
+    new_player = IA(None, 15, 20, 25, 3, None)
+    ia_group.add(new_player)
+
 while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -72,6 +79,7 @@ while running:
     
     screen.blit(text, textRect)
     pg.display.flip()
+    ia_group.draw(screen)
     clock.tick(60)
 
 pg.quit()
