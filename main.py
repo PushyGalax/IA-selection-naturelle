@@ -1,7 +1,7 @@
 #import
 import pygame as pg
 from random import *
-from math import cos, sin
+from math import cos, sin, sqrt
 
 #prg
 class IA(pg.sprite.Sprite):
@@ -12,7 +12,7 @@ class IA(pg.sprite.Sprite):
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
         self.vector = vector
-        
+
         #var ia
         self.vitesse = vitesse
         self.taille = taille
@@ -40,8 +40,43 @@ class Monstre(pg.sprite.Sprite):
         super().__init__()                  #val à changer
         self.VITESSE = 20
         self.CHAMPVISION = 35
+        self.vector = pg.Vector2(0,0)
         self.image = pg.image.load('ball.png')
         self.rect = self.image.get_rect()
+        self.target = None
+        self.state = "LURKING"
+
+    def dist_sprites(self, sprite):
+        return sqrt((self.rect.x - sprite.area.x)**2 + (self.rect.y - sprite.area.y)**2)
+
+    def direction_sprites(self, sprite):
+        vec = self.dist_sprites(sprite)
+        norme_vec = sqrt(vec.x**2 + vec.y**2)
+        return pg.Vector2(vec.x/norme_vec, vec.y/norme_vec)
+
+    def lurk(self):
+        pass
+
+    def research(self, ia):
+        for spri in ia.sprites():
+            if self.dist_sprites(spri)<self.CHAMPVISION:
+                self.target = spri
+                self.state = "CHASING"
+                break
+
+    def chase(self):
+        self.vector = self.direction_sprites(self.target)
+        self.update()
+        if self.dist_sprites(self.target)>self.CHAMPVISION:
+            self.target = None
+            self.state = "LURKING"
+
+    def manage_states(self, ia):
+        if self.state == "LURKING":
+            self.lurk()
+            self.research()
+        elif self.state == "CHASING":
+            self.chase()
 
     def calcnewpos(self, rect, vector):
         (angle,z) = vector
@@ -49,7 +84,7 @@ class Monstre(pg.sprite.Sprite):
         return rect.move(dx,dy)
 
     def update(self):
-        newpos = self.calcnewpos(self.rect,self.vector)
+        newpos = self.calcnewpos(self.rect, self.vector)
         self.rect = newpos
 
 
@@ -75,7 +110,7 @@ text = font.render('Show stat', True, (255,255,255), (0,0,0))
 textRect = text.get_rect()
 textRect.center = (1200, 25)
 
-group_monstre = pg.sprite.Group
+group_monstre = pg.sprite.Group()
 for i in range(1):
     new_monstre = Monstre()
     group_monstre.add(new_monstre)
