@@ -8,12 +8,10 @@ class IA(pg.sprite.Sprite):
     def __init__(self, vector, vitesse, taille, champvision, pv, timer) -> None:             #je pense an stat il faut taille, vitesse, pv, champ de vision
         #var pygame
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.image.load('ball.png')
-        self.rect = self.image.get_rect()
+        self.image, self.rect = pg.image.load('ball.png')
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
         self.vector = vector
-        self.rect.center = [randint(0,1280),randint(0,720)]
         
         #var ia
         self.vitesse = vitesse
@@ -23,7 +21,7 @@ class IA(pg.sprite.Sprite):
         self.timer = timer
 
     def __str__(self) -> str:               #print des stat de l'objet
-        return f"{self.vitesse} {self.taille} {self.champvision} {self.timer} {self.pv}"
+        return f"{self.vitesse} {self.taille} {self.champvision}"
     
     def calcnewpos(self,rect,vector):
         (angle,z) = vector
@@ -37,13 +35,23 @@ class IA(pg.sprite.Sprite):
     def move(self):
         pass
 
-class monstre(pg.sprite.Sprite):
+class Monstre(pg.sprite.Sprite):
     def __init__(self) -> None:             #les monstres n'évolue pas ils font 1 de dégats et ils ont vitesse const et champ de vision const
-        self.VITESSE = 20                   #val à changer
+        super().__init__()                  #val à changer
+        self.VITESSE = 20
         self.CHAMPVISION = 35
+        self.image = pg.image.load('ball.png')
+        self.rect = self.image.get_rect()
 
-    def __str__(self) -> str:
-        pass
+    def calcnewpos(self, rect, vector):
+        (angle,z) = vector
+        (dx,dy) = (z*cos(angle),z*sin(angle))
+        return rect.move(dx,dy)
+
+    def update(self):
+        newpos = self.calcnewpos(self.rect,self.vector)
+        self.rect = newpos
+
 
 class fruit(pg.sprite.Sprite):
     def __init__(self) -> None:             #les fruits n'évolue pas, plus 1 pv quand IA sur fruit
@@ -67,10 +75,10 @@ text = font.render('Show stat', True, (255,255,255), (0,0,0))
 textRect = text.get_rect()
 textRect.center = (1200, 25)
 
-ia_group = pg.sprite.Group()
-for joueur in range(20):
-    new_player = IA(None, 15, 20, 25, 3, None)
-    ia_group.add(new_player)
+group_monstre = pg.sprite.Group
+for i in range(1):
+    new_monstre = Monstre()
+    group_monstre.add(new_monstre)
 
 while running:
     for event in pg.event.get():
@@ -79,7 +87,7 @@ while running:
     
     screen.blit(text, textRect)
     pg.display.flip()
-    ia_group.draw(screen)
+    group_monstre.draw(screen)
     clock.tick(60)
 
 pg.quit()
