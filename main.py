@@ -2,10 +2,11 @@
 import pygame as pg
 from random import *
 from math import cos, sin, sqrt
+from timeit import default_timer
 
-#prg
+
 class IA(pg.sprite.Sprite):
-    def __init__(self, vitesse, taille, champvision, pv, timer, cible, chasseur) -> None:
+    def __init__(self, vitesse, taille, champvision, pv) -> None:
         #var pygame
         pg.sprite.Sprite.__init__(self)
         self.image = pg.image.load('ia.png')
@@ -13,66 +14,57 @@ class IA(pg.sprite.Sprite):
         self.image = pg.transform.scale(self.image, (taille, taille))
         self.rect = self.image.get_rect()
         self.area = self.screen.get_rect()
-        self.vector = pg.Vector2(0,0)
-        self.cible = cible
-        self.chasseur = chasseur
+
         self.target = None
 
         self.rect.center = [randint(0,1280),randint(0,720)]
         #var ia
-        self.vitesse = vitesse
+        self.vitessenum = vitesse
+        self.vector = pg.Vector2(random(),random())
+        self.vector = self.vector.normalize()
+
         self.taille = taille
         self.champvision = champvision
         self.pv = pv
-        self.timer = timer
-
-    def __str__(self) -> str:               #print des stat de l'objet
-        return f"{self.vitesse} {self.taille} {self.champvision} {self.pv} {self.timer}"
+        self.pvmax = pv
+        self.timer = default_timer()
     
-    def update(self):
-        newpos = self.calcnewpos(self.rect,self.vector)
-        self.rect = newpos
-
-    def dist_sprites(self, sprite):
-        return sqrt((self.rect.x - sprite.rect.x)**2 + (self.rect.y - sprite.rect.y)**2)
-
-    def direction_sprites(self, sprite):
-        vec = pg.Vector2(sprite.rect.x - self.rect.x, sprite.rect.y - self.rect.y)
-        norme_vec = self.dist_sprites(sprite)
-        return pg.Vector2(vec.x/norme_vec, vec.y/norme_vec)
-
-    def research(self, fruit_):
-        for spri in fruit_.sprites():
-            if self.dist_sprites(spri)<self.CHAMPVISION:
-                self.target = spri
-                return True
-        self.target = None
-        return False
+    def __str__(self):               #print des stat de l'objet
+        statact = [self.vector, self.taille, self.champvision, self.pv, self.pvmax, self.timer]
+        return statact
     
-    def servie(self, chasseur_):
-        for spri in chasseur_.sprites():
-            if self.dist_sprites(spri)<self.CHAMPVISION:
-                self.target = spri
-                return True
-        self.target = None
-        return False
+    def degat(self):
+        self.pv-=1
     
-    def move(self):
-        self.vector = self.direction_sprites(self.target)
-        self.update()
-        if self.dist_sprites(self.target)>self.CHAMPVISION:
-            pass
+    def fin(self):
+        time = default_timer()
+        self.timer = time - self.timer
+        return [self.vector, self.taille, self.champvision, self.pv, self.timer]
 
-    def calcnewpos(self, rect, vector):
-        (angle,z) = vector
-        (dx,dy) = (z*cos(angle),z*sin(angle))
-        return rect.move(dx,dy)
+    def move(self, monstres):
+        self.recherche_plus_proches(monstres)
+        self.rect = self.rect.move(self.vector * self.vitessenum)
+        centrex = self.rect.centerx
+        if centrex+25>=1280 or centrex-25<=0:
+            self.vector.x *= -1
+        centrey = self.rect.centery
+        if centrey+25>=720 or centrey<=0:
+            self.vector.y *= -1
 
-    def update(self):
-        newpos = self.calcnewpos(self.rect, self.vector)
-        self.rect = newpos
+    def distance(self, point): # point = classe avec un rect
+        return sqrt((self.rect.centerx-point.rect.x)**2 + (self.rect.centery-point.rect.y)**2)
 
-
+    def recherche_plus_proches(self, monstres):
+        min_dist = float("+inf")
+        monstre_proche = None
+        for elt in monstres.sprites():
+            dist_monstre = self.distance(elt)
+            if dist_monstre<=self.champvision and dist_monstre<min_dist:
+                min_dist = dist_monstre
+                monstre_proche = elt
+        if monstre_proche is not None:
+            self.vector = pg.Vector2(self.rect.centerx-monstre_proche.rect.centerx, self.rect.centery-monstre_proche.rect.centery)
+            self.vector = self.vector.normalize()
 
 
 class Monstre(pg.sprite.Sprite):
@@ -88,7 +80,7 @@ class Monstre(pg.sprite.Sprite):
         print(self.vector)
 
     def move(self):
-        self.rect = self.rect.move(self.vector.x*self.VITESSE, self.vector.y*self.VITESSE)
+        self.rect = self.rect.move(self.vector * self.VITESSE)
         centrex = self.rect.centerx
         if centrex+25>=1280 or centrex-25<=0:
             self.vector.x *= -1
@@ -133,10 +125,10 @@ ia_group = pg.sprite.Group()
 
 # ia
 for joueur in range(1):
-    new_player = IA(None, 15, 3, 25, 3, None, group_monstre)
+    new_player = IA(5, 3, 25, 3)
 
-for joueur in range(20):
-    new_player = IA(pg.Vector2(0,0), 30, 30, 3, None, group_fruit, group_monstre)
+for joueur in range(2):
+    new_player = IA(2, 30, 200, 3)
     ia_group.add(new_player)
 
 
@@ -149,6 +141,9 @@ while running:
 
     for elt in group_monstre.sprites():
         elt.move()
+
+    for elt in ia_group.sprites():
+        elt.move(group_monstre)
 
     screen.blit(text, textRect)
 
