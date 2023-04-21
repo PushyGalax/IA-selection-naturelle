@@ -6,11 +6,10 @@ class IA(pg.sprite.Sprite):
     def __init__(self, vitesse, taille, champvision, pv) -> None:
         #var pygame
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.image.load('victime.bmp')
+        self.image = pg.image.load('ia.png')
         self.image.set_colorkey((247, 247, 247))
         self.screen = pg.display.get_surface()
-        self.size = self.image.get_size()
-        self.image = pg.transform.scale(self.image, (self.size[0]/taille, self.size[1]/taille))
+        self.image = pg.transform.scale(self.image, (taille, taille))
         self.rect = self.image.get_rect()
         self.area = self.screen.get_rect()
         self.vector = pg.Vector2(0,0)
@@ -58,7 +57,7 @@ statia=[]
 
 ia_group = pg.sprite.Group()
 for joueur in range(20):
-    new_player = IA(5 ,5, 30, 3)
+    new_player = IA(5 ,50, 30, 3)
     ia_group.add(new_player)
 
 while running:

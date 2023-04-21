@@ -32,7 +32,7 @@ class IA(pg.sprite.Sprite):
         self.timer = default_timer()
     
     def __str__(self):
-        statact = [self.vector, self.taille, self.champvision, self.pv, self.pvmax, self.timer]
+        statact = [self.taille, self.champvision, self.pv, self.pvmax, self.timer]
         return statact
     
     def degat(self):
@@ -41,7 +41,7 @@ class IA(pg.sprite.Sprite):
     def fin(self):
         time = default_timer()
         self.timer = time - self.timer
-        return [self.vector, self.taille, self.champvision, self.pv, self.timer]
+        return [self.vitessenum, self.taille, self.champvision, self.pv, self.timer]
 
     def move(self, monstres):
         self.recherche_plus_proches(monstres)
