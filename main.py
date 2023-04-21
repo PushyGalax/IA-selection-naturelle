@@ -128,6 +128,7 @@ textRect.center = (1200, 25)
 group_fruit = pg.sprite.Group()
 group_fruit.add(fruit())
 
+d = 0
 # monstre
 group_monstre = pg.sprite.Group()
 for i in range(2):
