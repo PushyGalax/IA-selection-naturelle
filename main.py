@@ -27,6 +27,7 @@ class IA(pg.sprite.Sprite):
         self.champvision = champvision
         self.pv = pv
         self.pvmax = pv
+        self.change_direction_timer = default_timer()
         self.timer = default_timer()
     
     def __str__(self):               #print des stat de l'objet
@@ -43,12 +44,24 @@ class IA(pg.sprite.Sprite):
 
     def move(self, monstres):
         self.recherche_plus_proches(monstres)
+        if default_timer() - self.change_direction_timer > 1:
+            self.vector = pg.Vector2(random(),random())
+            self.vector = self.vector.normalize()
+            self.change_direction_timer = default_timer()
         self.rect = self.rect.move(self.vector * self.vitessenum)
         centrex = self.rect.centerx
-        if centrex+25>=1280 or centrex-25<=0:
+        if centrex+self.taille//2>=1280:
+            self.rect.centerx = 1280-self.taille//2
+            self.vector.x *= -1
+        elif centrex-self.taille//2<=0:
+            self.rect.centerx = self.taille//2
             self.vector.x *= -1
         centrey = self.rect.centery
-        if centrey+25>=720 or centrey<=0:
+        if centrey+self.taille//2>=720:
+            self.rect.centery = 720-self.taille//2
+            self.vector.y *= -1
+        elif centrey-self.taille//2<=0:
+            self.rect.centery = self.taille//2
             self.vector.y *= -1
 
     def distance(self, point): # point = classe avec un rect
@@ -152,6 +165,6 @@ while running:
 
     pg.display.flip()
 
-    clock.tick(60)
+    clock.tick(180)
 
 pg.quit()
