@@ -132,6 +132,10 @@ screen = pg.display.set_mode((1280, 720))
 clock = pg.time.Clock()
 running = True
 
+# texte
+police = pg.font.SysFont("monospace" ,15)
+l_pv = []
+
 # fruit
 group_fruit = pg.sprite.Group()
 group_fruit.add(fruit())
@@ -148,6 +152,7 @@ ia_group = pg.sprite.Group()
 for joueur in range(5):
     new_player = IA(2, 30, 200, 3)
     ia_group.add(new_player)
+    l_pv.append(pg.font.render("3", 1, (255,)*3))
 
 statia=[]
 
@@ -161,8 +166,9 @@ while running:
     for elt in group_monstre.sprites():
         elt.move()
 
-    for elt in ia_group.sprites():
+    for i,elt in enumerate(ia_group.sprites()):
         elt.move(group_monstre)
+        screen.blit(l_pv[i], (elt.rect.x, elt.rect.centery-elt.taille))
 
     ia_list = ia_group.sprites()
     if len(ia_list) != 0:
@@ -173,11 +179,6 @@ while running:
                 mort=elem.fin()
                 statia.append(mort)
                 ia_group.remove(elem)
-
-        # for elem in ia_list:
-        #     alea = randint(1,5)
-        #     if alea == 1:
-        #         elem.degat()
     else:
         statia.sort(key=lambda M : M[4], reverse=True)
         best=statia[0]
