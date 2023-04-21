@@ -38,7 +38,7 @@ class IA(pg.sprite.Sprite):
     def fin(self):
         time = default_timer()
         self.timer = time - self.timer
-        return [self.vitesse, self.taille, self.champvision, self.pv, self.timer]
+        return [self.vitesse, self.taille, self.champvision, self.pvmax, self.timer]
 
 
 pg.init()
@@ -47,7 +47,7 @@ screen = pg.display.set_mode((1280, 720))
 clock = pg.time.Clock()
 running = True
 
-screen.fill("black")
+
 font = pg.font.Font('freesansbold.ttf', 16)
 text = font.render('Show stat', True, (255,255,255), (0,0,0))
 
@@ -62,6 +62,7 @@ for joueur in range(20):
     ia_group.add(new_player)
 
 while running:
+    screen.fill("black")
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
@@ -77,27 +78,27 @@ while running:
                 ia_group.remove(elem)
 
         for elem in ia_list:
-            alea = randint(1,3)
+            alea = randint(1,5)
             if alea == 1:
                 elem.degat()
     else:
-        statia.sort(key=lambda M : M[5], reverse=True)
+        statia.sort(key=lambda M : M[3], reverse=True)
         best=statia[0]
-        statia.remove[0]
+        statia.remove(best)
         for elem in statia:
             vitesse = (best[0]+elem[0])//2
             taille = (best[1]+elem[1])//2
             champ = (best[2]+elem[2])//2
             pv = (best[3]+elem[3])//2
-            ia_list.add(IA(vitesse,taille,champ,pv))
-        ia_list.add(IA(best[0],best[1],best[2],best[3]))
+            ia_group.add(IA(vitesse,taille,champ,pv))
+        ia_group.add(IA(best[0],best[1],best[2],best[3]))
         statia=[]
 
     screen.blit(text, textRect)
-    pg.display.flip()
+    
 
     ia_group.draw(screen)
-
+    pg.display.flip()
     clock.tick(60)
 
 pg.quit()
