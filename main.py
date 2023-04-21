@@ -3,6 +3,7 @@ import pygame as pg
 from random import *
 from math import cos, sin, sqrt
 from timeit import default_timer
+import tkinter as tk
 
 
 class IA(pg.sprite.Sprite):
@@ -30,7 +31,7 @@ class IA(pg.sprite.Sprite):
         self.change_direction_timer = default_timer()
         self.timer = default_timer()
     
-    def __str__(self):               #print des stat de l'objet
+    def __str__(self):
         statact = [self.vector, self.taille, self.champvision, self.pv, self.pvmax, self.timer]
         return statact
     
@@ -90,7 +91,7 @@ class Monstre(pg.sprite.Sprite):
         self.image = pg.transform.scale(self.image, (50, 50))
         self.rect = self.image.get_rect()
         self.rect.center = [randint(0,1280),randint(0,720)]
-        print(self.vector)
+        # print(self.vector)
 
     def move(self):
         self.rect = self.rect.move(self.vector * self.VITESSE)
@@ -131,7 +132,7 @@ group_fruit.add(fruit())
 d = 0
 # monstre
 group_monstre = pg.sprite.Group()
-for i in range(2):
+for i in range(10):
     new_monstre = Monstre()
     group_monstre.add(new_monstre)
 
@@ -141,10 +142,11 @@ ia_group = pg.sprite.Group()
 for joueur in range(1):
     new_player = IA(5, 3, 25, 3)
 
-for joueur in range(2):
+for joueur in range(5):
     new_player = IA(2, 30, 200, 3)
     ia_group.add(new_player)
 
+statia=[]
 
 while running:
     for event in pg.event.get():
@@ -160,6 +162,32 @@ while running:
         elt.move(group_monstre)
 
     screen.blit(text, textRect)
+    
+    ia_list = ia_group.sprites()
+    if len(ia_list) != 0:
+        for elem in ia_list:
+            stat = elem.__str__()
+            pv = stat[3]
+            if pv == 0:
+                mort=elem.fin()
+                statia.append(mort)
+                ia_group.remove(elem)
+
+        for elem in ia_list:
+            alea = randint(1,5)
+            if alea == 1:
+                elem.degat()
+    else:
+        statia.sort(key=lambda M : M[3], reverse=True)
+        best=statia[0]
+        statia.remove(best)
+        for elem in statia:
+            vitesse = (best[0]+elem[0])//2
+            taille = (best[1]+elem[1])//2
+            champ = (best[2]+elem[2])//2
+            pv = (best[3]+elem[3])//2
+            ia_group.add(IA(vitesse,taille,champ,pv))
+        ia_group.add(IA(best[0],best[1],best[2],best[3]))
 
     ia_group.draw(screen)
     group_monstre.draw(screen)
