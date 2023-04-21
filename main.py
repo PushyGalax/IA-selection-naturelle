@@ -23,10 +23,16 @@ class IA(pg.sprite.Sprite):
         self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
         self.vector = self.vector.normalize()
 
+        self.hit_cooldown = 3
+        self.imortality_frames = default_timer()
+
         self.TAILLE = taille
         self.champvision = champvision
+
         self.pv = pv
         self.pvmax = pv
+        self.pv_text = police.render(str(self.pv)+" PV", 1, (255,)*3)
+
         self.change_direction_timer = default_timer()
         self.timer = default_timer()
     
@@ -36,6 +42,8 @@ class IA(pg.sprite.Sprite):
     
     def degat(self):
         self.pv-=1
+        self.pv_text = police.render(str(self.pv)+" PV", 1, (255,)*3)
+        self.imortality_frames = default_timer()
     
     def fin(self):
         time = default_timer()
@@ -65,7 +73,7 @@ class IA(pg.sprite.Sprite):
             self.vector.y *= -1
 
     def collision(self, monstre):
-        if self.rect.colliderect(monstre.rect):
+        if default_timer()-self.imortality_frames>=self.hit_cooldown and self.rect.colliderect(monstre.rect):
             self.degat()
 
     def distance(self, point): # point = classe avec un rect
@@ -134,7 +142,6 @@ running = True
 
 # texte
 police = pg.font.SysFont("monospace" ,15)
-l_pv = []
 
 # fruit
 group_fruit = pg.sprite.Group()
@@ -152,7 +159,6 @@ ia_group = pg.sprite.Group()
 for joueur in range(5):
     new_player = IA(2, 30, 200, 3)
     ia_group.add(new_player)
-    l_pv.append(pg.font.render("3", 1, (255,)*3))
 
 statia=[]
 
@@ -166,9 +172,9 @@ while running:
     for elt in group_monstre.sprites():
         elt.move()
 
-    for i,elt in enumerate(ia_group.sprites()):
+    for elt in ia_group.sprites():
         elt.move(group_monstre)
-        screen.blit(l_pv[i], (elt.rect.x, elt.rect.centery-elt.taille))
+        screen.blit(elt.pv_text, (elt.rect.x, elt.rect.centery-elt.TAILLE))
 
     ia_list = ia_group.sprites()
     if len(ia_list) != 0:
