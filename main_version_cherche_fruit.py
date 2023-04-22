@@ -37,13 +37,19 @@ class IA(pg.sprite.Sprite):
     def degat(self):
         self.pv-=1
     
+    def bonus(self):
+        self.pv+=1
+        if self.pv > self.pvmax:
+            self.pvmax = self.pv
+    
     def fin(self):
         time = default_timer()
         self.timer = time - self.timer
         return [self.vitessenum, self.TAILLE, self.champvision, self.pvmax, self.timer]
 
-    def move(self, monstres):
-        self.recherche_plus_proches(monstres)
+    def move(self, monstres, fruit):
+        self.recherche_plus_proches_monstre(monstres)
+        self.recherche_plus_proches_fruit(fruit)
         if default_timer() - self.change_direction_timer > 1:
             self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
             self.vector = self.vector.normalize()
@@ -67,21 +73,39 @@ class IA(pg.sprite.Sprite):
     def collisionmonstre(self, monstre):
         if self.rect.colliderect(monstre.rect):
             self.degat()
+    
+    def collisionfruit(self, fruit):
+        if self.rect.colliderect(fruit.rect):
+            group_fruit.remove(fruit)
+            self.bonus()
 
     def distance(self, point): # point = classe avec un rect
         return sqrt((self.rect.centerx-point.rect.x)**2 + (self.rect.centery-point.rect.y)**2)
 
-    def recherche_plus_proches(self, elem):
+    def recherche_plus_proches_monstre(self, monstre):
         min_dist = float("+inf")
-        elem_proche = None
-        for elt in elem.sprites():
-            dist_elem = self.distance(elt)
-            if dist_elem<=self.champvision and dist_elem<min_dist:
-                min_dist = dist_elem
-                elem_proche = elt
-        if elem_proche is not None:
-            self.colisonmonstre(elem_proche)
-            self.vector = pg.Vector2(self.rect.centerx-elem_proche.rect.centerx, self.rect.centery-elem_proche.rect.centery)
+        monstre_proche = None
+        for elt in monstre.sprites():
+            dist_monstre = self.distance(elt)
+            if dist_monstre<=self.champvision and dist_monstre<min_dist:
+                min_dist = dist_monstre
+                monstre_proche = elt
+        if monstre_proche is not None:
+            self.collisionmonstre(monstre_proche)
+            self.vector = pg.Vector2(self.rect.centerx-monstre_proche.rect.centerx, self.rect.centery-monstre_proche.rect.centery)
+            self.vector = self.vector.normalize()
+    
+    def recherche_plus_proches_fruit(self, fruit):
+        min_dist = float("+inf")
+        fruit_proche = None
+        for elt in fruit.sprites():
+            dist_fruit = self.distance(elt)
+            if dist_fruit<=self.champvision and dist_fruit<min_dist:
+                min_dist = dist_fruit
+                fruit_proche = elt
+        if fruit_proche is not None:
+            self.collisionfruit(fruit_proche)
+            self.vector = pg.Vector2(self.rect.centerx-fruit_proche.rect.centerx, self.rect.centery-fruit_proche.rect.centery)
             self.vector = self.vector.normalize()
 
 
@@ -119,6 +143,11 @@ class Monstre(pg.sprite.Sprite):
 class fruit(pg.sprite.Sprite):
     def __init__(self) -> None:             #les fruits n'évolue pas, plus 1 pv quand IA sur fruit
         super().__init__()
+        self.image = pg.image.load('fruit.png')
+        self.image.set_colorkey((245, 245, 245))
+        self.image = pg.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect()
+        self.rect.center = [randint(0,1280),randint(0,720)]
 
     def __str__(self) -> str:
         pass
@@ -134,18 +163,19 @@ running = True
 
 # fruit
 group_fruit = pg.sprite.Group()
-group_fruit.add(fruit())
+for i in range(5):
+    group_fruit.add(fruit())
 
 # monstre
 group_monstre = pg.sprite.Group()
-for i in range(10):
+for i in range(20):
     new_monstre = Monstre()
     group_monstre.add(new_monstre)
 
 ia_group = pg.sprite.Group()
 
 # ia
-for joueur in range(5):
+for joueur in range(12):
     new_player = IA(2, 30, 200, 3)
     ia_group.add(new_player)
 
@@ -162,7 +192,7 @@ while running:
         elt.move()
 
     for elt in ia_group.sprites():
-        elt.move(group_monstre)
+        elt.move(group_monstre, group_fruit)
 
     ia_list = ia_group.sprites()
     if len(ia_list) != 0:
@@ -189,6 +219,7 @@ while running:
 
     ia_group.draw(screen)
     group_monstre.draw(screen)
+    group_fruit.draw(screen)
 
     pg.display.flip()
 
