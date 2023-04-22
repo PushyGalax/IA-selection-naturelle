@@ -3,6 +3,7 @@ import pygame as pg
 from random import *
 from math import cos, sin, sqrt
 from timeit import default_timer
+import csv
 
 
 class IA(pg.sprite.Sprite):
@@ -120,7 +121,7 @@ class Monstre(pg.sprite.Sprite):
     def __init__(self) -> None:             #les monstres n'évolue pas ils font 1 de dégats et ils ont vitesse const et champ de vision const
         super().__init__()                  #val à changer
         self.VITESSE = 3
-        self.TAILLE = 50
+        self.TAILLE = 35
         self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
         self.vector = self.vector.normalize()
         self.image = pg.image.load('monstre.png')
@@ -152,7 +153,7 @@ class fruit(pg.sprite.Sprite):
         super().__init__()
         self.image = pg.image.load("fruit.png")
         self.image.set_colorkey((245,)*3)
-        self.image = pg.transform.scale(self.image, (50,50))
+        self.image = pg.transform.scale(self.image, (30,30))
         self.rect = self.image.get_rect()
         self.rect.center = [randint(0,1280), randint(0,720)]
 
@@ -183,8 +184,19 @@ ia_group = pg.sprite.Group()
 
 # ia
 for joueur in range(12):
-    new_player = IA(2, 30, 200, 3)
-    ia_group.add(new_player)
+    chance=randint(1,2)
+    if chance == 1:
+        vitesse = round(2-random())
+        taille = round(23-randint(0,4))
+        champ = 40
+        pv = round(3-random())
+    else:
+        vitesse = round(2+random())
+        taille = round(23+randint(0,4))
+        champ = 40
+        pv = round(3+random())
+    ia_group.add(IA(vitesse,taille,champ,pv))
+
 
 # les stats
 screen.fill("#A0A0A0", (1280,0,1780,720))
@@ -225,11 +237,19 @@ while running:
         best=statia[0]
         statia.remove(best)
         for elem in statia:
-            vitesse = (best[0]+elem[0])//2
+            vitesse = ((best[0]+elem[0])//2)
             taille = (best[1]+elem[1])//2
-            champ = (best[2]+elem[2])//2
             pv = (best[3]+elem[3])//2
-            ia_group.add(IA(vitesse,taille,champ,pv))
+            chance=randint(0,1)
+            if chance == 0:
+                vitesse = round(vitesse-random())
+                taille = round(taille - randint(0,4))
+                pv=round(pv-random())
+            else:
+                vitesse = round(vitesse+random())
+                taille = round(taille + randint(0,4))
+                pv=round(pv+random())
+            ia_group.add(IA(vitesse,taille,40,pv))
         ia_group.add(IA(best[0],best[1],best[2],best[3]))
         statia = []
 
