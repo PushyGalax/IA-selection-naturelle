@@ -3,6 +3,10 @@ import pygame as pg
 from random import *
 from math import sqrt
 from timeit import default_timer
+import csv
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import pandas as pd
 
 
 class IA(pg.sprite.Sprite):
@@ -172,7 +176,7 @@ class fruit(pg.sprite.Sprite):
         super().__init__()
         self.image = pg.image.load("fruit.png")
         self.image.set_colorkey((245,)*3)
-        self.image = pg.transform.scale(self.image, (50,50))
+        self.image = pg.transform.scale(self.image, (30,30))
         self.rect = self.image.get_rect()
         self.rect.center = [randint(0,1230), randint(0,670)]
 
@@ -222,8 +226,19 @@ ia_group = pg.sprite.Group()
 
 # ia
 for joueur in range(12):
-    new_player = IA(2, 30, 200, 3, "ia.png")
-    ia_group.add(new_player)
+    chance=randint(1,2)
+    if chance == 1:
+        vitesse = round(2-random())
+        taille = round(30-randint(0,4))
+        champ = 60
+        pv = round(3-random())
+    else:
+        vitesse = round(2+random())
+        taille = round(30+randint(0,4))
+        champ = 60
+        pv = round(3+random())
+    ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
+
 
 # les stats
 screen.fill("#A0A0A0", (1280,0,1780,720))
@@ -257,6 +272,43 @@ def reset_vitesse_jeu():
 statia=[]
 pause = False
 var_vitesse = 0
+
+#csv part
+
+def moyenne(stat):
+    moy=0
+    incr=0
+    for elem in ia_group.sprites():
+        act=elem.__str__()
+        incr+=1
+        moy+=act[stat]
+    moy=moy/incr
+    return moy
+
+generation = 1
+vit=moyenne(0)
+tai=moyenne(1)
+hp=moyenne(4)
+
+fieldnames = ['generation', "vitesse", "taille", "pv"]
+
+with open('dataia.csv', 'w') as csvfile:
+    csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    csvwrite.writeheader()
+    info = {"generation": generation,
+        "vitesse": vit,
+        "taille": tai,
+        "pv": hp}
+    csvwrite.writerow(info)
+
+fieldnames2=["generation", "tempsmin", "tempsmax", "tempsmoy"]
+
+with open('tempsia.csv', 'w') as csvfile:
+    csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
+    csvwrite.writeheader()
+
+
+temps=[]
 
 while running:
     for event in pg.event.get():
@@ -298,18 +350,50 @@ while running:
                     ia_group.remove(elem)
         else:
             statia.sort(key=lambda M : M[4], reverse=True)
+            moytemps=0
+            for elem in statia:
+                moytemps+=elem[4]
+            moytemps/=len(statia)
             best=statia[0]
             statia.remove(best)
             for elem in statia:
-                vitesse = (best[0]+elem[0])//2
+                vitesse = ((best[0]+elem[0])//2)
                 taille = (best[1]+elem[1])//2
-                champ = (best[2]+elem[2])//2
                 pv = (best[3]+elem[3])//2
-                ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
+                chance=randint(0,1)
+                if chance == 0:
+                    vitesse = round(vitesse-random())
+                    taille = round(taille + random())
+                    pv=round(pv-random())
+                else:
+                    vitesse = round(vitesse+random())
+                    taille = round(taille - random())
+                    pv=round(pv+random())
+                if taille < 20:
+                    taille=20
+                ia_group.add(IA(vitesse,taille,40,pv,"ia.png"))
             ia_group.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png"))
             reset_vitesse_jeu()
             for i in range(int(var_vitesse*10)):
                 modifier_vitesse_jeu(0.1 if var_vitesse>0 else -0.1)
+            generation+=1
+
+            with open('dataia.csv', 'a') as csvfile:
+                csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                info = {"generation": generation,
+                        "vitesse": moyenne(0),
+                        "taille": moyenne(1),
+                        "pv": moyenne(4)}
+                csvwrite.writerow(info)
+
+            with open('tempsia.csv', 'a') as csvfile:
+                csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
+                info = {"generation": generation,
+                        "tempsmin": statia[-1][4],
+                        "tempsmax": statia[0][4],
+                        "tempsmoy": moytemps}
+                csvwrite.writerow(info)
+
             statia = []
 
         group_fruits.draw(screen)
