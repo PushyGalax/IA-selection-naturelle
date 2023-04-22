@@ -3,7 +3,6 @@ import pygame as pg
 from random import *
 from math import cos, sin, sqrt
 from timeit import default_timer
-import tkinter as tk
 
 
 class IA(pg.sprite.Sprite):
@@ -135,7 +134,7 @@ class fruit(pg.sprite.Sprite):
 #main
 
 pg.init()
-screen = pg.display.set_mode((1280, 720))
+screen = pg.display.set_mode((1780, 720)) # 1280, 720
 
 clock = pg.time.Clock()
 running = True
@@ -167,7 +166,8 @@ while running:
         if event.type == pg.QUIT:
             running = False
     
-    screen.fill("black")
+    screen.fill("black", (0,0,1280,720))
+    screen.fill("white", (1280,0,1780,720))
 
     for elt in group_monstre.sprites():
         elt.move()
