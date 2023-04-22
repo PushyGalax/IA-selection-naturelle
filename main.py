@@ -191,12 +191,12 @@ for joueur in range(12):
     chance=randint(1,2)
     if chance == 1:
         vitesse = round(2-random())
-        taille = round(23-randint(0,4))
+        taille = round(30-randint(0,4))
         champ = 40
         pv = round(3-random())
     else:
         vitesse = round(2+random())
-        taille = round(23+randint(0,4))
+        taille = round(30+randint(0,4))
         champ = 40
         pv = round(3+random())
     ia_group.add(IA(vitesse,taille,champ,pv))
@@ -225,7 +225,6 @@ def moyenne(stat):
     moy=moy/incr
     return moy
 
-
 generation = 1
 vit=moyenne(0)
 tai=moyenne(1)
@@ -241,6 +240,15 @@ with open('dataia.csv', 'w') as csvfile:
         "taille": tai,
         "pv": hp}
     csvwrite.writerow(info)
+
+fieldnames2=["generation", "tempsmin", "tempsmax", "tempsmoy"]
+
+with open('tempsia.csv', 'w') as csvfile:
+    csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
+    csvwrite.writeheader()
+
+
+temps=[]
 
 while running:
     for event in pg.event.get():
@@ -267,6 +275,10 @@ while running:
                 ia_group.remove(elem)
     else:
         statia.sort(key=lambda M : M[4], reverse=True)
+        moytemps=0
+        for elem in statia:
+            moytemps+=elem[4]
+        moytemps/=len(statia)
         best=statia[0]
         statia.remove(best)
         for elem in statia:
@@ -282,6 +294,8 @@ while running:
                 vitesse = round(vitesse+random())
                 taille = round(taille - random())
                 pv=round(pv+random())
+            if taille < 20:
+                taille=20
             ia_group.add(IA(vitesse,taille,40,pv))
         ia_group.add(IA(best[0],best[1],best[2],best[3]))
         generation+=1
@@ -292,6 +306,14 @@ while running:
                     "vitesse": moyenne(0),
                     "taille": moyenne(1),
                     "pv": moyenne(4)}
+            csvwrite.writerow(info)
+
+        with open('tempsia.csv', 'a') as csvfile:
+            csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
+            info = {"generation": generation,
+                    "tempsmin": statia[-1][4],
+                    "tempsmax": statia[0][4],
+                    "tempsmoy": moytemps}
             csvwrite.writerow(info)
 
         statia = []
