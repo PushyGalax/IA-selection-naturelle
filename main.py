@@ -1,25 +1,28 @@
 #import
 import pygame as pg
 from random import *
-from math import cos, sin, sqrt
+from math import sqrt
 from timeit import default_timer
 
 
 class IA(pg.sprite.Sprite):
-    def __init__(self, vitesse, taille, champvision, pv) -> None:
+    def __init__(self, vitesse, taille, champvision, pv, image) -> None:
         #var pygame
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.image.load('ia.png')
+        self.image = pg.image.load(image)
         self.screen = pg.display.get_surface()
         self.image = pg.transform.scale(self.image, (taille, taille))
         self.rect = self.image.get_rect()
 
         self.target = None
 
-        self.rect.center = [randint(0,1280),randint(0,720)]
+        self.x = randint(0,1280-taille)
+        self.y = randint(0,720-taille)
+
+        self.rect.center = [self.x, self.y]
         #var ia
-        self.vitessenum = vitesse
-        self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
+        self.VITESSE = vitesse
+        self.vitesse = vitesse # bouge (game_speed)
         self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
         self.vector = self.vector.normalize()
 
@@ -37,7 +40,7 @@ class IA(pg.sprite.Sprite):
         self.timer = default_timer()
     
     def __str__(self):
-        statact = [self.vitessenum, self.TAILLE, self.champvision, self.pv, self.pvmax, self.timer]
+        statact = [self.VITESSE, self.TAILLE, self.champvision, self.pv, self.pvmax, self.timer]
         return statact
     
     def degat(self):
@@ -54,42 +57,49 @@ class IA(pg.sprite.Sprite):
     def fin(self):
         time = default_timer()
         self.timer = time - self.timer
-        return [self.vitessenum, self.TAILLE, self.champvision, self.pvmax, self.timer]
+        return [self.VITESSE, self.TAILLE, self.champvision, self.pvmax, self.timer]
 
-    def move(self, monstres, fruits):
+    def move(self, monstres, fruits, ia):
         self.recherche_plus_proche_monstre(monstres)
         self.recherche_plus_proche_fruit(fruits)
+        self.repousse_autres_ia(ia)
         if default_timer() - self.change_direction_timer > 1:
             self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
             self.vector = self.vector.normalize()
             self.change_direction_timer = default_timer()
-        self.rect = self.rect.move(self.vector * self.vitessenum)
-        centrex = self.rect.centerx
-        if centrex+self.TAILLE//2>=1280:
-            self.rect.centerx = 1280-self.TAILLE//2
+        distance = self.vector * self.vitesse
+        self.x += distance.x
+        self.y += distance.y
+        self.rect.center = (self.x, self.y)
+        if self.x+self.TAILLE//2>=1280:
+            self.x = 1280-self.TAILLE//2
+            self.rect.centerx = self.x
             self.vector.x *= -1
-        elif centrex-self.TAILLE//2<=0:
-            self.rect.centerx = self.TAILLE//2
+        elif self.x-self.TAILLE//2<=0:
+            self.x = self.TAILLE//2
+            self.rect.centerx = self.x
             self.vector.x *= -1
-        centrey = self.rect.centery
-        if centrey+self.TAILLE//2>=720:
-            self.rect.centery = 720-self.TAILLE//2
+        if self.y+self.TAILLE//2>=720:
+            self.y = 720-self.TAILLE//2
+            self.rect.centery = self.y
             self.vector.y *= -1
-        elif centrey-self.TAILLE//2<=0:
-            self.rect.centery = self.TAILLE//2
+        elif self.y-self.TAILLE//2<=0:
+            self.y = self.TAILLE//2
+            self.rect.centery = self.y
             self.vector.y *= -1
 
-    def collision_monstre(self, monstre):
-        if default_timer()-self.imortality_frames>=self.hit_cooldown and self.rect.colliderect(monstre.rect):
-            self.degat()
-
-    def collision_fruit(self, fruit):
-        if self.rect.colliderect(fruit.rect):
-            group_fruits.remove(fruit)
-            self.bonus()
+    def collision(self, element):
+        return self.rect.colliderect(element.rect)
 
     def distance(self, point): # point = classe avec un rect
-        return sqrt((self.rect.centerx-point.rect.x)**2 + (self.rect.centery-point.rect.y)**2)
+        return sqrt((self.x-point.rect.x)**2 + (self.y-point.rect.y)**2)
+
+    def repousse_autres_ia(self, ia):
+        for elt in ia.sprites():
+            if elt!=self and self.collision(elt):
+                self.vector = pg.Vector2(self.x-elt.x, self.y-elt.y)
+                if self.vector!= pg.Vector2(0,0):
+                    self.vector = self.vector.normalize()
 
     def recherche_plus_proche_monstre(self, monstres):
         min_dist = float("+inf")
@@ -100,9 +110,11 @@ class IA(pg.sprite.Sprite):
                 min_dist = dist_monstre
                 monstre_proche = elt
         if monstre_proche is not None:
-            self.collision_monstre(monstre_proche)
-            self.vector = pg.Vector2(self.rect.centerx-monstre_proche.rect.centerx, self.rect.centery-monstre_proche.rect.centery)
-            self.vector = self.vector.normalize()
+            if default_timer()-self.imortality_frames>=self.hit_cooldown and self.collision(monstre_proche):
+                self.degat()
+            self.vector = pg.Vector2(self.x-monstre_proche.x, self.y-monstre_proche.y)
+            if self.vector!= pg.Vector2(0,0):
+                self.vector = self.vector.normalize()
 
     def recherche_plus_proche_fruit(self, fruits):
         min_dist = float("+inf")
@@ -113,37 +125,45 @@ class IA(pg.sprite.Sprite):
                 min_dist = dist_fruit
                 fruit_proche = elt
         if fruit_proche is not None:
-            self.collision_fruit(fruit_proche)
+            if self.collision(fruit_proche):
+                group_fruits.remove(fruit_proche)
+                self.bonus()
 
 
 class Monstre(pg.sprite.Sprite):
     def __init__(self) -> None:             #les monstres n'évolue pas ils font 1 de dégats et ils ont vitesse const et champ de vision const
         super().__init__()                  #val à changer
         self.VITESSE = 3
+        self.vitesse = 3
         self.TAILLE = 50
+        self.x = randint(0,1280-self.TAILLE)
+        self.y = randint(0,720-self.TAILLE)
         self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
         self.vector = self.vector.normalize()
         self.image = pg.image.load('monstre.png')
         self.image = pg.transform.scale(self.image, (self.TAILLE, self.TAILLE))
         self.rect = self.image.get_rect()
-        self.rect.center = [randint(0,1280),randint(0,720)]
-        # print(self.vector)
 
     def move(self):
-        self.rect = self.rect.move(self.vector * self.VITESSE)
-        centrex = self.rect.centerx
-        if centrex+self.TAILLE//2>=1280:
-            self.rect.centerx = 1280-self.TAILLE//2
+        distance = self.vector * self.vitesse
+        self.x += distance.x
+        self.y += distance.y
+        self.rect.center = (self.x, self.y)
+        if self.x+self.TAILLE//2>=1280:
+            self.x = 1280-self.TAILLE//2
+            self.rect.centerx = self.x
             self.vector.x *= -1
-        elif centrex-self.TAILLE//2<=0:
-            self.rect.centerx = self.TAILLE//2
+        elif self.x-self.TAILLE//2<=0:
+            self.x = self.TAILLE//2
+            self.rect.centerx = self.x
             self.vector.x *= -1
-        centrey = self.rect.centery
-        if centrey+self.TAILLE//2>=720:
-            self.rect.centery = 720-self.TAILLE//2
+        if self.y+self.TAILLE//2>=720:
+            self.y = 720-self.TAILLE//2
+            self.rect.centery = self.y
             self.vector.y *= -1
-        elif centrey-self.TAILLE//2<=0:
-            self.rect.centery = self.TAILLE//2
+        elif self.y-self.TAILLE//2<=0:
+            self.y = self.TAILLE//2
+            self.rect.centery = self.y
             self.vector.y *= -1
 
 
@@ -154,8 +174,27 @@ class fruit(pg.sprite.Sprite):
         self.image.set_colorkey((245,)*3)
         self.image = pg.transform.scale(self.image, (50,50))
         self.rect = self.image.get_rect()
-        self.rect.center = [randint(0,1280), randint(0,720)]
+        self.rect.center = [randint(0,1230), randint(0,670)]
 
+
+class Bouton:
+    def __init__(self, image, pos):
+        self.rect = pg.rect.Rect(0,0,64,64)
+        self.rect.center = (pos[0]+32,pos[1]+32)
+        self.image = pg.image.load(image)
+        self.draw()
+
+    def clicked(self, image):
+        mouse = pg.mouse.get_pos()
+        if self.rect.collidepoint(mouse):
+            self.image = pg.image.load(image)
+            self.draw()
+            return True
+        return False
+
+    def draw(self):
+        self.image = pg.transform.scale(self.image, (64,64))
+        screen.blit(self.image, (self.rect.x, self.rect.y))
 
 #main
 
@@ -183,7 +222,7 @@ ia_group = pg.sprite.Group()
 
 # ia
 for joueur in range(12):
-    new_player = IA(2, 30, 200, 3)
+    new_player = IA(2, 30, 200, 3, "ia.png")
     ia_group.add(new_player)
 
 # les stats
@@ -194,49 +233,89 @@ texte_stats = pg.image.load("texte_stats.png")
 texte_stats = pg.transform.scale(texte_stats, (256,64))
 screen.blit(bordure, (1280,0))
 screen.blit(texte_stats, (1410,50))
+bouton_pause = Bouton("pause_unpressed.png", (1498,600))
+bouton_ralentir = Bouton("ralentir_unpressed.png", (1418,600))
+bouton_accelerer = Bouton("accelerer_unpressed.png", (1578,600))
+
+def modifier_vitesse_jeu(increment):
+    monstres = group_monstre.sprites()
+    ia = ia_group.sprites()
+    if min(ia, key=lambda x: x.vitesse).vitesse>0.5 and min(monstres, key=lambda x: x.vitesse).vitesse>0.5:
+        for elt in monstres:
+            elt.vitesse += increment
+        for elt in ia:
+            elt.vitesse += increment
+
+def reset_vitesse_jeu():
+    monstres = group_monstre.sprites()
+    ia = ia_group.sprites()
+    for elt in monstres:
+        elt.vitesse = elt.VITESSE
+    for elt in ia:
+        elt.vitesse = elt.VITESSE
 
 statia=[]
+pause = False
+var_vitesse = 0
 
 while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
-    
-    screen.fill("black", (0,0,1280,720))
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if bouton_pause.clicked("pause_pressed.png" if not pause else "pause_unpressed.png"):
+                pause = not pause
+            if bouton_ralentir.clicked("ralentir_pressed.png") and not pause and len(ia_group.sprites())!=0:
+                modifier_vitesse_jeu(-0.1)
+                var_vitesse -= 0.1
+            elif bouton_accelerer.clicked("accelerer_pressed.png") and not pause and len(ia_group.sprites())!=0:
+                modifier_vitesse_jeu(0.1)
+                var_vitesse +=  0.1
+        else:
+            bouton_ralentir.image = pg.image.load("ralentir_unpressed.png")
+            bouton_ralentir.draw()
+            bouton_accelerer.image = pg.image.load("accelerer_unpressed.png")
+            bouton_accelerer.draw()
 
-    for elt in group_monstre.sprites():
-        elt.move()
+    if not pause:
+        screen.fill("black", (0,0,1280,720))
 
-    for elt in ia_group.sprites():
-        elt.move(group_monstre, group_fruits)
-        screen.blit(elt.pv_text, (elt.rect.x-8, elt.rect.centery-elt.TAILLE))
+        for elt in group_monstre.sprites():
+            elt.move()
 
-    ia_list = ia_group.sprites()
-    if len(ia_list) != 0:
-        for elem in ia_list:
-            stat = elem.__str__()
-            pv = stat[3]
-            if pv == 0:
-                mort=elem.fin()
-                statia.append(mort)
-                ia_group.remove(elem)
-    else:
-        statia.sort(key=lambda M : M[4], reverse=True)
-        best=statia[0]
-        statia.remove(best)
-        for elem in statia:
-            vitesse = (best[0]+elem[0])//2
-            taille = (best[1]+elem[1])//2
-            champ = (best[2]+elem[2])//2
-            pv = (best[3]+elem[3])//2
-            ia_group.add(IA(vitesse,taille,champ,pv))
-        ia_group.add(IA(best[0],best[1],best[2],best[3]))
-        statia = []
+        for elt in ia_group.sprites():
+            elt.move(group_monstre, group_fruits, ia_group)
+            screen.blit(elt.pv_text, (elt.rect.x-8, elt.rect.centery-elt.TAILLE))
 
-    group_fruits.draw(screen)
-    ia_group.draw(screen)
-    group_monstre.draw(screen)
-    
+        ia_list = ia_group.sprites()
+        if len(ia_list) != 0:
+            for elem in ia_list:
+                stat = elem.__str__()
+                pv = stat[3]
+                if pv == 0:
+                    mort=elem.fin()
+                    statia.append(mort)
+                    ia_group.remove(elem)
+        else:
+            statia.sort(key=lambda M : M[4], reverse=True)
+            best=statia[0]
+            statia.remove(best)
+            for elem in statia:
+                vitesse = (best[0]+elem[0])//2
+                taille = (best[1]+elem[1])//2
+                champ = (best[2]+elem[2])//2
+                pv = (best[3]+elem[3])//2
+                ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
+            ia_group.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png"))
+            reset_vitesse_jeu()
+            for i in range(int(var_vitesse*10)):
+                modifier_vitesse_jeu(0.1 if var_vitesse>0 else -0.1)
+            statia = []
+
+        group_fruits.draw(screen)
+        ia_group.draw(screen)
+        group_monstre.draw(screen)
+        
     pg.display.flip()
 
     clock.tick(60)
