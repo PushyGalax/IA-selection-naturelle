@@ -4,6 +4,9 @@ from random import *
 from math import cos, sin, sqrt
 from timeit import default_timer
 import csv
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 
 class IA(pg.sprite.Sprite):
@@ -103,7 +106,8 @@ class IA(pg.sprite.Sprite):
         if monstre_proche is not None:
             self.collision_monstre(monstre_proche)
             self.vector = pg.Vector2(self.rect.centerx-monstre_proche.rect.centerx, self.rect.centery-monstre_proche.rect.centery)
-            self.vector = self.vector.normalize()
+            if not self.vector == pg.Vector2(0,0):
+                self.vector = self.vector.normalize()
 
     def recherche_plus_proche_fruit(self, fruits):
         min_dist = float("+inf")
@@ -209,6 +213,35 @@ screen.blit(texte_stats, (1410,50))
 
 statia=[]
 
+#csv part
+
+def moyenne(stat):
+    moy=0
+    incr=0
+    for elem in ia_group.sprites():
+        act=elem.__str__()
+        incr+=1
+        moy+=act[stat]
+    moy=moy/incr
+    return moy
+
+
+generation = 1
+vit=moyenne(0)
+tai=moyenne(1)
+hp=moyenne(4)
+
+fieldnames = ['generation', "vitesse", "taille", "pv"]
+
+with open('dataia.csv', 'w') as csvfile:
+    csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    csvwrite.writeheader()
+    info = {"generation": generation,
+        "vitesse": vit,
+        "taille": tai,
+        "pv": hp}
+    csvwrite.writerow(info)
+
 while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -243,14 +276,24 @@ while running:
             chance=randint(0,1)
             if chance == 0:
                 vitesse = round(vitesse-random())
-                taille = round(taille - randint(0,4))
+                taille = round(taille + random())
                 pv=round(pv-random())
             else:
                 vitesse = round(vitesse+random())
-                taille = round(taille + randint(0,4))
+                taille = round(taille - random())
                 pv=round(pv+random())
             ia_group.add(IA(vitesse,taille,40,pv))
         ia_group.add(IA(best[0],best[1],best[2],best[3]))
+        generation+=1
+
+        with open('dataia.csv', 'a') as csvfile:
+            csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            info = {"generation": generation,
+                    "vitesse": moyenne(0),
+                    "taille": moyenne(1),
+                    "pv": moyenne(4)}
+            csvwrite.writerow(info)
+
         statia = []
 
     group_fruits.draw(screen)
@@ -259,6 +302,6 @@ while running:
     
     pg.display.flip()
 
-    clock.tick(60)
+    clock.tick(360)
 
 pg.quit()
