@@ -211,6 +211,7 @@ running = True
 police = pg.font.SysFont("monospace" ,15)
 police_stat = pg.font.SysFont("monospace", 29)
 
+
 # fruit
 group_fruits = pg.sprite.Group()
 for i in range(5):
@@ -228,14 +229,14 @@ ia_group = pg.sprite.Group()
 for joueur in range(12):
     chance=randint(1,2)
     if chance == 1:
-        vitesse = round(6-random())
+        vitesse = round(2-random())
         taille = round(30-randint(0,4))
-        champ = 50
+        champ = round()
         pv = round(3-random())
     else:
-        vitesse = round(6+random())
+        vitesse = round(2+random())
         taille = round(30+randint(0,4))
-        champ = 50
+        champ = round()
         pv = round(3+random())
     ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
 
