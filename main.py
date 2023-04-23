@@ -372,13 +372,22 @@ while running:
                 chance=randint(0,1)
                 if chance == 0:
                     vitesse = round(vitesse-random())
-                    taille = round(taille + random())
-                    champ = round(50-random())
-                    pv=round(pv-random())
                 else:
                     vitesse = round(vitesse+random())
+                chance=randint(0,1)
+                if chance == 0:
+                    taille = round(taille + random())
+                else:
                     taille = round(taille - random())
-                    champ = round(50+random())
+                chance=randint(0,1)
+                if chance == 0:
+                    champ = round(champ+random())
+                else:
+                    champ = round(champ-random())
+                chance=randint(0,1)
+                if chance == 0:
+                    pv=round(pv-random())
+                else:
                     pv=round(pv+random())
                 if taille < 20:
                     taille=20
@@ -405,6 +414,9 @@ while running:
                         "tempsmax": statia[0][4],
                         "tempsmoy": moytemps}
                 csvwrite.writerow(info)
+            
+            for i in range(5):
+                group_fruits.add(fruit())
 
             statia = []
 
@@ -415,6 +427,6 @@ while running:
 
     pg.display.flip()
 
-    clock.tick(60*15)
+    clock.tick(60*10)
 
 pg.quit()
