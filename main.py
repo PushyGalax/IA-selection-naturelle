@@ -67,7 +67,7 @@ class IA(pg.sprite.Sprite):
         self.recherche_plus_proche_monstre(monstres)
         self.recherche_plus_proche_fruit(fruits)
         self.repousse_autres_ia(ia)
-        if default_timer() - self.change_direction_timer > 1:
+        if default_timer() - self.change_direction_timer > randint(1,5):
             self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
             self.vector = self.vector.normalize()
             self.change_direction_timer = default_timer()
@@ -96,7 +96,7 @@ class IA(pg.sprite.Sprite):
         return self.rect.colliderect(element.rect)
 
     def distance(self, point): # point = classe avec un rect
-        return sqrt((self.x-point.rect.x)**2 + (self.y-point.rect.y)**2)
+        return sqrt((self.x-point.rect.centerx)**2 + (self.y-point.rect.centery)**2)
 
     def repousse_autres_ia(self, ia):
         for elt in ia.sprites():
@@ -175,7 +175,6 @@ class fruit(pg.sprite.Sprite):
     def __init__(self) -> None:             #les fruits n'évolue pas, plus 1 pv quand IA sur fruit
         super().__init__()
         self.image = pg.image.load("fruit.png")
-        self.image.set_colorkey((245,)*3)
         self.image = pg.transform.scale(self.image, (30,30))
         self.rect = self.image.get_rect()
         self.rect.center = [randint(0,1230), randint(0,670)]
@@ -186,7 +185,6 @@ class Bouton:
         self.rect = pg.rect.Rect(0,0,64,64)
         self.rect.center = (pos[0]+32,pos[1]+32)
         self.image = pg.image.load(image)
-        self.draw()
 
     def clicked(self, image):
         mouse = pg.mouse.get_pos()
@@ -204,12 +202,15 @@ class Bouton:
 
 pg.init()
 screen = pg.display.set_mode((1780, 720)) # 1280, 720
+image_fond = pg.image.load("grass.png")
 
 clock = pg.time.Clock()
 running = True
 
 # texte
 police = pg.font.SysFont("monospace" ,15)
+police_stat = pg.font.SysFont("monospace", 29)
+
 
 # fruit
 group_fruits = pg.sprite.Group()
@@ -241,16 +242,22 @@ for joueur in range(12):
 
 
 # les stats
-screen.fill("#A0A0A0", (1280,0,1780,720))
 bordure = pg.image.load("bordure.png")
 bordure = pg.transform.scale(bordure, (16,720))
 texte_stats = pg.image.load("texte_stats.png")
 texte_stats = pg.transform.scale(texte_stats, (256,64))
-screen.blit(bordure, (1280,0))
-screen.blit(texte_stats, (1410,50))
 bouton_pause = Bouton("pause_unpressed.png", (1498,600))
 bouton_ralentir = Bouton("ralentir_unpressed.png", (1418,600))
 bouton_accelerer = Bouton("accelerer_unpressed.png", (1578,600))
+
+def cote_stat():
+    screen.fill("#A0A0A0", (1280,0,1780,720))
+    screen.blit(texte_stats, (1410,50))
+    screen.blit(police_stat.render(f"Génération : {generation}", 1, (0,)*3), (1420,300))
+    screen.blit(police_stat.render(f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320,350))
+    bouton_pause.draw()
+    bouton_accelerer.draw()
+    bouton_ralentir.draw()
 
 def modifier_vitesse_jeu(increment):
     monstres = group_monstre.sprites()
@@ -307,7 +314,6 @@ with open('tempsia.csv', 'w') as csvfile:
     csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
     csvwrite.writeheader()
 
-
 temps=[]
 
 while running:
@@ -330,7 +336,9 @@ while running:
             bouton_accelerer.draw()
 
     if not pause:
-        screen.fill("black", (0,0,1280,720))
+        ia_list = ia_group.sprites()
+        screen.blit(image_fond, (0,0))
+        cote_stat()
 
         for elt in group_monstre.sprites():
             elt.move()
@@ -339,7 +347,6 @@ while running:
             elt.move(group_monstre, group_fruits, ia_group)
             screen.blit(elt.pv_text, (elt.rect.x-8, elt.rect.centery-elt.TAILLE))
 
-        ia_list = ia_group.sprites()
         if len(ia_list) != 0:
             for elem in ia_list:
                 stat = elem.__str__()
@@ -399,7 +406,8 @@ while running:
         group_fruits.draw(screen)
         ia_group.draw(screen)
         group_monstre.draw(screen)
-        
+        screen.blit(bordure, (1280,0))
+
     pg.display.flip()
 
     clock.tick(60)
