@@ -230,12 +230,12 @@ for joueur in range(12):
     if chance == 1:
         vitesse = round(2-random())
         taille = round(30-randint(0,4))
-        champ =  round()
+        champ =  round(50)
         pv = round(3-random())
     else:
         vitesse = round(2+random())
         taille = round(30+randint(0,4))
-        champ = round()
+        champ = round(50)
         pv = round(3+random())
     ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
 
