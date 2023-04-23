@@ -231,12 +231,12 @@ for joueur in range(12):
     if chance == 1:
         vitesse = round(2-random())
         taille = round(30-randint(0,4))
-        champ =  round(50)
+        champ =  round(50-random())
         pv = round(3-random())
     else:
         vitesse = round(2+random())
         taille = round(30+randint(0,4))
-        champ = round(50)
+        champ = round(50+random())
         pv = round(3+random())
     ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
 
@@ -296,8 +296,9 @@ generation = 1
 vit=moyenne(0)
 tai=moyenne(1)
 hp=moyenne(4)
+ch=moyenne(2)
 
-fieldnames = ['generation', "vitesse", "taille", "pv"]
+fieldnames = ['generation', "vitesse", "taille", "pv", "champ vision"]
 
 with open('dataia.csv', 'w') as csvfile:
     csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -305,7 +306,8 @@ with open('dataia.csv', 'w') as csvfile:
     info = {"generation": generation,
         "vitesse": vit,
         "taille": tai,
-        "pv": hp}
+        "pv": hp,
+        "champ vision": ch}
     csvwrite.writerow(info)
 
 fieldnames2=["generation", "tempsmin", "tempsmax", "tempsmoy"]
@@ -371,14 +373,16 @@ while running:
                 if chance == 0:
                     vitesse = round(vitesse-random())
                     taille = round(taille + random())
+                    champ = round(50-random())
                     pv=round(pv-random())
                 else:
                     vitesse = round(vitesse+random())
                     taille = round(taille - random())
+                    champ = round(50+random())
                     pv=round(pv+random())
                 if taille < 20:
                     taille=20
-                ia_group.add(IA(vitesse,taille,40,pv,"ia.png"))
+                ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
             ia_group.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png"))
             reset_vitesse_jeu()
             for i in range(int(var_vitesse*10)):
@@ -390,7 +394,8 @@ while running:
                 info = {"generation": generation,
                         "vitesse": moyenne(0),
                         "taille": moyenne(1),
-                        "pv": moyenne(4)}
+                        "pv": moyenne(4),
+                        "champ vision": moyenne(2)}
                 csvwrite.writerow(info)
 
             with open('tempsia.csv', 'a') as csvfile:
@@ -410,6 +415,6 @@ while running:
 
     pg.display.flip()
 
-    clock.tick(60)
+    clock.tick(60*15)
 
 pg.quit()
