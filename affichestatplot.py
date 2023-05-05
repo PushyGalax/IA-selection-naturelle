@@ -8,14 +8,12 @@ def animate(i):
     y1 = data['vitesse']
     y2 = data['taille']
     y3 = data["pv"]
-    y4 = data["champ vision"]
 
     plt.cla()
 
     plt.plot(x, y1, label='vitesse')
     plt.plot(x, y2, label='taille')
     plt.plot(x, y3, label='pv')
-    plt.plot(x, y4, label="champ vision")
 
     plt.legend(loc='upper left')
     plt.tight_layout()

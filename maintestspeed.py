@@ -4,6 +4,9 @@ from random import *
 from math import sqrt
 from timeit import default_timer
 import csv
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import pandas as pd
 
 
 class IA(pg.sprite.Sprite):
@@ -64,7 +67,7 @@ class IA(pg.sprite.Sprite):
         self.recherche_plus_proche_monstre(monstres)
         self.recherche_plus_proche_fruit(fruits)
         self.repousse_autres_ia(ia)
-        if default_timer() - self.change_direction_timer > randint(1,5):
+        if default_timer() - self.change_direction_timer > 1:
             self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
             self.vector = self.vector.normalize()
             self.change_direction_timer = default_timer()
@@ -93,7 +96,7 @@ class IA(pg.sprite.Sprite):
         return self.rect.colliderect(element.rect)
 
     def distance(self, point): # point = classe avec un rect
-        return sqrt((self.x-point.rect.centerx)**2 + (self.y-point.rect.centery)**2)
+        return sqrt((self.x-point.rect.x)**2 + (self.y-point.rect.y)**2)
 
     def repousse_autres_ia(self, ia):
         for elt in ia.sprites():
@@ -172,6 +175,7 @@ class fruit(pg.sprite.Sprite):
     def __init__(self) -> None:             #les fruits n'évolue pas, plus 1 pv quand IA sur fruit
         super().__init__()
         self.image = pg.image.load("fruit.png")
+        self.image.set_colorkey((245,)*3)
         self.image = pg.transform.scale(self.image, (30,30))
         self.rect = self.image.get_rect()
         self.rect.center = [randint(0,1230), randint(0,670)]
@@ -182,6 +186,7 @@ class Bouton:
         self.rect = pg.rect.Rect(0,0,64,64)
         self.rect.center = (pos[0]+32,pos[1]+32)
         self.image = pg.image.load(image)
+        self.draw()
 
     def clicked(self, image):
         mouse = pg.mouse.get_pos()
@@ -199,15 +204,12 @@ class Bouton:
 
 pg.init()
 screen = pg.display.set_mode((1780, 720)) # 1280, 720
-image_fond = pg.image.load("grass.png")
 
 clock = pg.time.Clock()
 running = True
 
 # texte
 police = pg.font.SysFont("monospace" ,15)
-police_stat = pg.font.SysFont("monospace", 29)
-
 
 # fruit
 group_fruits = pg.sprite.Group()
@@ -220,7 +222,7 @@ for i in range(20):
     new_monstre = Monstre()
     group_monstre.add(new_monstre)
 
-group_ia = pg.sprite.Group()
+ia_group = pg.sprite.Group()
 
 # ia
 for joueur in range(12):
@@ -228,37 +230,31 @@ for joueur in range(12):
     if chance == 1:
         vitesse = round(2-random())
         taille = round(30-randint(0,4))
-        champ =  60
+        champ = 60
         pv = round(3-random())
     else:
         vitesse = round(2+random())
         taille = round(30+randint(0,4))
         champ = 60
         pv = round(3+random())
-    group_ia.add(IA(vitesse,taille,champ,pv,"ia.png"))
+    ia_group.add(IA(vitesse,taille,champ,pv,"ia.png"))
 
 
 # les stats
+screen.fill("#A0A0A0", (1280,0,1780,720))
 bordure = pg.image.load("bordure.png")
 bordure = pg.transform.scale(bordure, (16,720))
 texte_stats = pg.image.load("texte_stats.png")
 texte_stats = pg.transform.scale(texte_stats, (256,64))
+screen.blit(bordure, (1280,0))
+screen.blit(texte_stats, (1410,50))
 bouton_pause = Bouton("pause_unpressed.png", (1498,600))
 bouton_ralentir = Bouton("ralentir_unpressed.png", (1418,600))
 bouton_accelerer = Bouton("accelerer_unpressed.png", (1578,600))
 
-def cote_stat():
-    screen.fill("#A0A0A0", (1280,0,1780,720))
-    screen.blit(texte_stats, (1410,50))
-    screen.blit(police_stat.render(f"Génération : {generation}", 1, (0,)*3), (1420,300))
-    screen.blit(police_stat.render(f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320,350))
-    bouton_pause.draw()
-    bouton_accelerer.draw()
-    bouton_ralentir.draw()
-
 def modifier_vitesse_jeu(increment):
     monstres = group_monstre.sprites()
-    ia = group_ia.sprites()
+    ia = ia_group.sprites()
     if min(ia, key=lambda x: x.vitesse).vitesse>0.5 and min(monstres, key=lambda x: x.vitesse).vitesse>0.5:
         for elt in monstres:
             elt.vitesse += increment
@@ -267,7 +263,7 @@ def modifier_vitesse_jeu(increment):
 
 def reset_vitesse_jeu():
     monstres = group_monstre.sprites()
-    ia = group_ia.sprites()
+    ia = ia_group.sprites()
     for elt in monstres:
         elt.vitesse = elt.VITESSE
     for elt in ia:
@@ -282,7 +278,7 @@ var_vitesse = 0
 def moyenne(stat):
     moy=0
     incr=0
-    for elem in group_ia.sprites():
+    for elem in ia_group.sprites():
         act=elem.__str__()
         incr+=1
         moy+=act[stat]
@@ -293,7 +289,6 @@ generation = 1
 vit=moyenne(0)
 tai=moyenne(1)
 hp=moyenne(4)
-
 
 fieldnames = ['generation', "vitesse", "taille", "pv"]
 
@@ -312,6 +307,7 @@ with open('tempsia.csv', 'w') as csvfile:
     csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
     csvwrite.writeheader()
 
+
 temps=[]
 
 while running:
@@ -321,10 +317,10 @@ while running:
         if event.type == pg.MOUSEBUTTONDOWN:
             if bouton_pause.clicked("pause_pressed.png" if not pause else "pause_unpressed.png"):
                 pause = not pause
-            if bouton_ralentir.clicked("ralentir_pressed.png") and not pause and len(group_ia.sprites())!=0:
+            if bouton_ralentir.clicked("ralentir_pressed.png") and not pause and len(ia_group.sprites())!=0:
                 modifier_vitesse_jeu(-0.1)
                 var_vitesse -= 0.1
-            elif bouton_accelerer.clicked("accelerer_pressed.png") and not pause and len(group_ia.sprites())!=0:
+            elif bouton_accelerer.clicked("accelerer_pressed.png") and not pause and len(ia_group.sprites())!=0:
                 modifier_vitesse_jeu(0.1)
                 var_vitesse +=  0.1
         else:
@@ -334,18 +330,16 @@ while running:
             bouton_accelerer.draw()
 
     if not pause:
-        ia_list = group_ia.sprites()
-        # screen.blit(image_fond, (0,0))
-        screen.fill("#317d50")
-        cote_stat()
+        screen.fill("black", (0,0,1280,720))
 
         for elt in group_monstre.sprites():
             elt.move()
 
-        for elt in group_ia.sprites():
-            elt.move(group_monstre, group_fruits, group_ia)
+        for elt in ia_group.sprites():
+            elt.move(group_monstre, group_fruits, ia_group)
             screen.blit(elt.pv_text, (elt.rect.x-8, elt.rect.centery-elt.TAILLE))
 
+        ia_list = ia_group.sprites()
         if len(ia_list) != 0:
             for elem in ia_list:
                 stat = elem.__str__()
@@ -353,7 +347,7 @@ while running:
                 if pv == 0:
                     mort=elem.fin()
                     statia.append(mort)
-                    group_ia.remove(elem)
+                    ia_group.remove(elem)
         else:
             statia.sort(key=lambda M : M[4], reverse=True)
             moytemps=0
@@ -362,27 +356,23 @@ while running:
             moytemps/=len(statia)
             best=statia[0]
             statia.remove(best)
-            for elem in statia:                     #[self.VITESSE, self.TAILLE, self.champvision, self.pvmax, self.timer]
-                vitesse = ((best[0]+elem[0])/2)
-                taille = (best[1]+elem[1])/2
-                pv = (best[3]+elem[3])/2
+            for elem in statia:
+                vitesse = ((best[0]+elem[0])//2)
+                taille = (best[1]+elem[1])//2
+                pv = (best[3]+elem[3])//2
                 chance=randint(0,1)
                 if chance == 0:
-                    vitesse = max(1,round(vitesse+random()))
+                    vitesse = round(vitesse-random())
+                    taille = round(taille + random())
+                    pv=round(pv-random())
                 else:
-                    vitesse = max(1,round(vitesse-random()))
-                chance=randint(0,1)
-                if chance == 0:
-                    taille = max(20,round(taille + random()))
-                else:
-                    taille = max(20,round(taille - random()))
-                chance=randint(0,1)
-                if chance == 0:
-                    pv=max(1,round(pv+random()))
-                else:
-                    pv=max(1,round(pv-random()))
-                group_ia.add(IA(vitesse,taille,60,pv,"ia.png"))
-            group_ia.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png"))
+                    vitesse = round(vitesse+random())
+                    taille = round(taille - random())
+                    pv=round(pv+random())
+                if taille < 20:
+                    taille=20
+                ia_group.add(IA(vitesse,taille,40,pv,"ia.png"))
+            ia_group.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png"))
             reset_vitesse_jeu()
             for i in range(int(var_vitesse*10)):
                 modifier_vitesse_jeu(0.1 if var_vitesse>0 else -0.1)
@@ -403,17 +393,13 @@ while running:
                         "tempsmax": statia[0][4],
                         "tempsmoy": moytemps}
                 csvwrite.writerow(info)
-            
-            for i in range(5):
-                group_fruits.add(fruit())
 
             statia = []
 
         group_fruits.draw(screen)
-        group_ia.draw(screen)
+        ia_group.draw(screen)
         group_monstre.draw(screen)
-        screen.blit(bordure, (1280,0))
-
+        
     pg.display.flip()
 
     clock.tick(60*10)
