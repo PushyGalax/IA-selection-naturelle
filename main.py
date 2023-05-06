@@ -7,7 +7,7 @@ import csv
 
 
 class IA(pg.sprite.Sprite):
-    def __init__(self, vitesse, taille, champvision, pv, image) -> None:
+    def __init__(self, vitesse, taille, champvision, pv, image, typeia) -> None:
         #var pygame
         pg.sprite.Sprite.__init__(self)
         self.image = pg.image.load(image)
@@ -32,6 +32,7 @@ class IA(pg.sprite.Sprite):
 
         self.TAILLE = taille
         self.champvision = champvision
+        self.typeia = typeia
 
         self.pv = pv
         self.pvmax = pv
@@ -39,31 +40,32 @@ class IA(pg.sprite.Sprite):
 
         self.change_direction_timer = default_timer()
         self.timer = default_timer()
-    
+
     def __str__(self):
         statact = [self.VITESSE, self.TAILLE, self.champvision, self.pv, self.pvmax, self.timer]
         return statact
-    
-    def degat(self):
-        self.pv-=1
-        self.pv_text = police.render(str(self.pv)+" PV", 1, (255,)*3)
-        self.imortality_frames = default_timer()
 
-    def bonus(self):
-        self.pv+=1
-        if self.pv < self.pvmax:
-            self.pvmax = self.pv
-        self.pv_text = police.render(str(self.pv)+" PV", 1, (255,)*3)
+    def degat(self, monstres):
+        for elt in monstres.sprites():
+            if default_timer()-self.imortality_frames>=self.hit_cooldown and self.collision(elt):
+                self.pv-=1
+                self.pv_text = police.render(str(self.pv)+" PV", 1, (255,)*3)
+                self.imortality_frames = default_timer()
 
     def fin(self):
         time = default_timer()
         self.timer = time - self.timer
-        return [self.VITESSE, self.TAILLE, self.champvision, self.pvmax, self.timer]
+        return [self.VITESSE, self.TAILLE, self.champvision, self.pvmax, self.timer, self.typeia]
 
     def move(self, monstres, fruits, ia):
-        self.recherche_plus_proche_monstre(monstres)
-        self.recherche_plus_proche_fruit(fruits)
+        if self.typeia == 1:
+            self.recherche_plus_proche_monstre(monstres)
+        elif self.typeia == 2:
+            self.recherche_plus_proche_monstre(monstres)
+            self.recherche_plus_proche_fruit(fruits)
         self.repousse_autres_ia(ia)
+        self.degat(monstres)
+        self.miam(fruits)
         if default_timer() - self.change_direction_timer > randint(1,5):
             self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
             self.vector = self.vector.normalize()
@@ -88,7 +90,7 @@ class IA(pg.sprite.Sprite):
             self.y = self.TAILLE//2
             self.rect.centery = self.y
             self.vector.y *= -1
-
+       
     def collision(self, element):
         return self.rect.colliderect(element.rect)
 
@@ -111,8 +113,6 @@ class IA(pg.sprite.Sprite):
                 min_dist = dist_monstre
                 monstre_proche = elt
         if monstre_proche is not None:
-            if default_timer()-self.imortality_frames>=self.hit_cooldown and self.collision(monstre_proche):
-                self.degat()
             self.vector = pg.Vector2(self.x-monstre_proche.x, self.y-monstre_proche.y)
             if self.vector!= pg.Vector2(0,0):
                 self.vector = self.vector.normalize()
@@ -122,13 +122,23 @@ class IA(pg.sprite.Sprite):
         fruit_proche = None
         for elt in fruits.sprites():
             dist_fruit = self.distance(elt)
-            if dist_fruit<=self.champvision and dist_fruit<min_dist:
+            if dist_fruit<=180 and dist_fruit<min_dist:                                                     #changer la distance de detection des fruits, 3* plus grande que pour detecte monstres
                 min_dist = dist_fruit
                 fruit_proche = elt
         if fruit_proche is not None:
-            if self.collision(fruit_proche):
-                group_fruits.remove(fruit_proche)
-                self.bonus()
+            self.vector = pg.Vector2(self.x-fruit_proche.rect.centerx, self.y-fruit_proche.rect.centery)
+            if self.vector!= pg.Vector2(0,0):
+                self.vector = self.vector.normalize()
+
+    def miam(self, fruits):
+        for elt in fruits.sprites():
+            if self.collision(elt):
+                group_fruits.remove(elt)
+                self.pv+=1
+                if self.pv < self.pvmax:
+                    self.pvmax = self.pv
+                self.pv_text = police.render(str(self.pv)+" PV", 1, (255,)*3)
+
 
 
 class Monstre(pg.sprite.Sprite):
@@ -226,16 +236,16 @@ group_ia = pg.sprite.Group()
 for joueur in range(12):
     chance=randint(1,2)
     if chance == 1:
-        vitesse = round(2-random())
+        vitesse = round(1.6-random())
         taille = round(30-randint(0,4))
         champ =  60
         pv = round(3-random())
     else:
-        vitesse = round(2+random())
+        vitesse = round(1.6+random())
         taille = round(30+randint(0,4))
         champ = 60
         pv = round(3+random())
-    group_ia.add(IA(vitesse,taille,champ,pv,"ia.png"))
+    group_ia.add(IA(vitesse,taille,champ,pv,"ia.png",randint(1,3)))
 
 
 # les stats
@@ -312,6 +322,12 @@ with open('tempsia.csv', 'w') as csvfile:
     csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
     csvwrite.writeheader()
 
+fieldnames3=["generation", "type1", "type2", "type3"]
+
+with open('type.csv', 'w') as csvfile:
+    csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames3)
+    csvwrite.writeheader()
+
 temps=[]
 
 while running:
@@ -355,10 +371,19 @@ while running:
                     statia.append(mort)
                     group_ia.remove(elem)
         else:
+            cpttype1=0
+            cpttype2=0
+            cpttype3=0
             statia.sort(key=lambda M : M[4], reverse=True)
             moytemps=0
             for elem in statia:
                 moytemps+=elem[4]
+                if elem[5]==1:
+                    cpttype1+=1
+                elif elem[5]==2:
+                    cpttype2+=1
+                elif elem[5]==3:
+                    cpttype3+=1
             moytemps/=len(statia)
             best=statia[0]
             statia.remove(best)
@@ -381,8 +406,16 @@ while running:
                     pv=max(1,round(pv+random()))
                 else:
                     pv=max(1,round(pv-random()))
-                group_ia.add(IA(vitesse,taille,60,pv,"ia.png"))
-            group_ia.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png"))
+                if elem[5] == best[5]:
+                    typeia = best[5]
+                else:
+                    chance = randint(1,5)
+                    if chance == 1:
+                        typeia = best[5]
+                    else:
+                        typeia = elem[5]
+                group_ia.add(IA(vitesse,taille,60,pv,"ia.png",typeia))
+            group_ia.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png",best[5]))
             reset_vitesse_jeu()
             for i in range(int(var_vitesse*10)):
                 modifier_vitesse_jeu(0.1 if var_vitesse>0 else -0.1)
@@ -404,6 +437,16 @@ while running:
                         "tempsmoy": moytemps}
                 csvwrite.writerow(info)
             
+            with open('type.csv', 'a') as csvfile:
+                csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames3)
+                info = {"generation": generation,
+                        "type1": cpttype1,
+                        "type2": cpttype2,
+                        "type3": cpttype3}
+                csvwrite.writerow(info)
+
+            for elem in group_fruits.sprites():
+                group_fruits.remove(elem)
             for i in range(5):
                 group_fruits.add(fruit())
 
