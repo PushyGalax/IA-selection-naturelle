@@ -151,7 +151,7 @@ class Monstre(pg.sprite.Sprite):
         self.y = randint(0,720-self.TAILLE)
         self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
         self.vector = self.vector.normalize()
-        self.image = pg.image.load('monstre.png')
+        self.image = pg.image.load('assets/monstre.png')
         self.image = pg.transform.scale(self.image, (self.TAILLE, self.TAILLE))
         self.rect = self.image.get_rect()
 
@@ -181,7 +181,7 @@ class Monstre(pg.sprite.Sprite):
 class fruit(pg.sprite.Sprite):
     def __init__(self) -> None:             #les fruits n'évolue pas, plus 1 pv quand IA sur fruit
         super().__init__()
-        self.image = pg.image.load("fruit.png")
+        self.image = pg.image.load("assets/fruit.png")
         self.image = pg.transform.scale(self.image, (30,30))
         self.rect = self.image.get_rect()
         self.rect.center = [randint(0,1230), randint(0,670)]
@@ -209,7 +209,7 @@ class Bouton:
 
 pg.init()
 screen = pg.display.set_mode((1780, 720)) # 1280, 720
-image_fond = pg.image.load("grass.png")
+image_fond = pg.image.load("assets/grass.png")
 
 clock = pg.time.Clock()
 running = True
@@ -245,17 +245,17 @@ for joueur in range(12):
         taille = round(30+randint(0,4))
         champ = 60
         pv = round(3+random())
-    group_ia.add(IA(vitesse,taille,champ,pv,"ia.png",randint(1,3)))
+    group_ia.add(IA(vitesse,taille,champ,pv,"assets/ia.png",randint(1,3)))
 
 
 # les stats
-bordure = pg.image.load("bordure.png")
+bordure = pg.image.load("assets/bordure.png")
 bordure = pg.transform.scale(bordure, (16,720))
-texte_stats = pg.image.load("texte_stats.png")
+texte_stats = pg.image.load("assets/texte_stats.png")
 texte_stats = pg.transform.scale(texte_stats, (256,64))
-bouton_pause = Bouton("pause_unpressed.png", (1498,600))
-bouton_ralentir = Bouton("ralentir_unpressed.png", (1418,600))
-bouton_accelerer = Bouton("accelerer_unpressed.png", (1578,600))
+bouton_pause = Bouton("assets/pause_unpressed.png", (1498,600))
+bouton_ralentir = Bouton("assets/ralentir_unpressed.png", (1418,600))
+bouton_accelerer = Bouton("assets/accelerer_unpressed.png", (1578,600))
 
 def cote_stat():
     screen.fill("#A0A0A0", (1280,0,1780,720))
@@ -335,18 +335,18 @@ while running:
         if event.type == pg.QUIT:
             running = False
         if event.type == pg.MOUSEBUTTONDOWN:
-            if bouton_pause.clicked("pause_pressed.png" if not pause else "pause_unpressed.png"):
+            if bouton_pause.clicked("assets/pause_pressed.png" if not pause else "assets/pause_unpressed.png"):
                 pause = not pause
-            if bouton_ralentir.clicked("ralentir_pressed.png") and not pause and len(group_ia.sprites())!=0:
+            if bouton_ralentir.clicked("assets/ralentir_pressed.png") and not pause and len(group_ia.sprites())!=0:
                 modifier_vitesse_jeu(-0.1)
                 var_vitesse -= 0.1
-            elif bouton_accelerer.clicked("accelerer_pressed.png") and not pause and len(group_ia.sprites())!=0:
+            elif bouton_accelerer.clicked("assets/accelerer_pressed.png") and not pause and len(group_ia.sprites())!=0:
                 modifier_vitesse_jeu(0.1)
                 var_vitesse +=  0.1
         else:
-            bouton_ralentir.image = pg.image.load("ralentir_unpressed.png")
+            bouton_ralentir.image = pg.image.load("assets/ralentir_unpressed.png")
             bouton_ralentir.draw()
-            bouton_accelerer.image = pg.image.load("accelerer_unpressed.png")
+            bouton_accelerer.image = pg.image.load("assets/accelerer_unpressed.png")
             bouton_accelerer.draw()
 
     if not pause:
@@ -414,8 +414,8 @@ while running:
                         typeia = best[5]
                     else:
                         typeia = elem[5]
-                group_ia.add(IA(vitesse,taille,60,pv,"ia.png",typeia))
-            group_ia.add(IA(best[0],best[1],best[2],best[3], "ia_shiny.png",best[5]))
+                group_ia.add(IA(vitesse,taille,60,pv,"assets/ia.png",typeia))
+            group_ia.add(IA(best[0],best[1],best[2],best[3], "assets/ia_shiny.png",best[5]))
             reset_vitesse_jeu()
             for i in range(int(var_vitesse*10)):
                 modifier_vitesse_jeu(0.1 if var_vitesse>0 else -0.1)
