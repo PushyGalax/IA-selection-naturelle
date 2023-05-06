@@ -24,8 +24,7 @@ class IA(pg.sprite.Sprite):
         # var ia
         self.VITESSE = vitesse
         self.vitesse = vitesse  # bouge (game_speed)
-        self.vector = pg.Vector2(
-            choice((-random(), random())), choice((-random(), random())))
+        self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
         self.vector = self.vector.normalize()
 
         self.hit_cooldown = 3
@@ -276,9 +275,9 @@ def cote_stat():
 
 statia = []
 var_vitesse = 0
+temps = []
 
 # csv part
-
 
 def moyenne(stat):
     moy = 0
@@ -290,37 +289,59 @@ def moyenne(stat):
     moy = moy/incr
     return moy
 
+def csv_ecrit():
+    with open('dataia.csv', 'a') as csvfile:
+        csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        info = {"generation": generation,
+                "vitesse": moyenne(0),
+                "taille": moyenne(1),
+                "pv": moyenne(4)}
+        csvwrite.writerow(info)
+
+    with open('tempsia.csv', 'a') as csvfile:
+        csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
+        info = {"generation": generation,
+                "tempsmin": statia[-1][4],
+                "tempsmax": statia[0][4],
+                "tempsmoy": moytemps}
+        csvwrite.writerow(info)
+
+    with open('type.csv', 'a') as csvfile:
+        csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames3)
+        info = {"generation": generation,
+                "type1": cpttype1,
+                "type2": cpttype2,
+                "type3": cpttype3}
+        csvwrite.writerow(info)
 
 generation = 1
-vit = moyenne(0)
+vie = moyenne(0)
 tai = moyenne(1)
 hp = moyenne(4)
 
 
 fieldnames = ['generation', "vitesse", "taille", "pv"]
+fieldnames2 = ["generation", "tempsmin", "tempsmax", "tempsmoy"]
+fieldnames3 = ["generation", "type1", "type2", "type3"]
 
 with open('dataia.csv', 'w') as csvfile:
     csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
     csvwrite.writeheader()
     info = {"generation": generation,
-            "vitesse": vit,
+            "vitesse": vie,
             "taille": tai,
             "pv": hp}
     csvwrite.writerow(info)
-
-fieldnames2 = ["generation", "tempsmin", "tempsmax", "tempsmoy"]
 
 with open('tempsia.csv', 'w') as csvfile:
     csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
     csvwrite.writeheader()
 
-fieldnames3 = ["generation", "type1", "type2", "type3"]
 
 with open('type.csv', 'w') as csvfile:
     csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames3)
     csvwrite.writeheader()
 
-temps = []
 
 while running:
     for event in pg.event.get():
@@ -381,9 +402,9 @@ while running:
                 taille = max(20, round(taille - random()))
             chance = randint(0, 1)
             if chance == 0:
-                pv = max(1, round(pv+random()))
+                pv = max(1, round(pv + random()))
             else:
-                pv = max(1, round(pv-random()))
+                pv = max(1, round(pv - random()))
             if elem[5] == best[5]:
                 typeia = best[5]
             else:
@@ -392,41 +413,12 @@ while running:
                     typeia = best[5]
                 else:
                     typeia = elem[5]
-            group_ia.add(IA(vitesse, taille, 60, pv,
-                         "assets/ia.png", typeia, stamina))
-        group_ia.add(IA(best[0], best[1], best[2], best[3],
-                     "assets/ia_shiny.png", best[5], stamina))
+            group_ia.add(IA(vitesse, taille, 60, pv, "assets/ia.png", typeia, stamina))
+        group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia_shiny.png", best[5], stamina))
 
         generation += 1
 
-        with open('dataia.csv', 'a') as csvfile:
-            csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            info = {"generation": generation,
-                    "vitesse": moyenne(0),
-                    "taille": moyenne(1),
-                    "pv": moyenne(4)}
-            csvwrite.writerow(info)
-
-        with open('tempsia.csv', 'a') as csvfile:
-            csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames2)
-            info = {"generation": generation,
-                    "tempsmin": statia[-1][4],
-                    "tempsmax": statia[0][4],
-                    "tempsmoy": moytemps}
-            csvwrite.writerow(info)
-
-        with open('type.csv', 'a') as csvfile:
-            csvwrite = csv.DictWriter(csvfile, fieldnames=fieldnames3)
-            info = {"generation": generation,
-                    "type1": cpttype1,
-                    "type2": cpttype2,
-                    "type3": cpttype3}
-            csvwrite.writerow(info)
-
-        for elem in group_fruits.sprites():
-            group_fruits.remove(elem)
-        for i in range(5):
-            group_fruits.add(fruit())
+        csv_ecrit()
 
         statia = []
 
@@ -437,6 +429,6 @@ while running:
 
     pg.display.flip()
 
-    clock.tick(60*10)
+    clock.tick(60)
 
 pg.quit()
