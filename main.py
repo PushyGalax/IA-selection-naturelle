@@ -10,6 +10,15 @@ class IA(pg.sprite.Sprite):
     def __init__(self, vitesse, taille, champvision, pv, image, typeia, stamina) -> None:
         # var pygame
         pg.sprite.Sprite.__init__(self)
+
+        if image == None:
+            if typeia == 1:
+                image = "assets/ia/type1.png"
+            elif typeia == 2:
+                image = "assets/ia/type2.png"
+            else:
+                image = "assets/ia/type3.png"
+
         self.image = pg.image.load(image)
         self.screen = pg.display.get_surface()
         self.image = pg.transform.scale(self.image, (taille, taille))
@@ -88,28 +97,28 @@ class IA(pg.sprite.Sprite):
             elif self.typeia == 2:
                 self.recherche_plus_proche_monstre(monstres)
                 self.recherche_plus_proche_fruit(fruits)
-        self.update_speed()
-        self.repousse_autres_ia(ia)
-        distance = self.vector
-        self.x += distance.x
-        self.y += distance.y
-        self.rect.center = (self.x, self.y)
-        if self.x+self.TAILLE//2 >= 1280:
-            self.x = 1280-self.TAILLE//2
-            self.rect.centerx = self.x
-            self.vector.x *= -1
-        elif self.x-self.TAILLE//2 <= 0:
-            self.x = self.TAILLE//2
-            self.rect.centerx = self.x
-            self.vector.x *= -1
-        if self.y+self.TAILLE//2 >= 720:
-            self.y = 720-self.TAILLE//2
-            self.rect.centery = self.y
-            self.vector.y *= -1
-        elif self.y-self.TAILLE//2 <= 0:
-            self.y = self.TAILLE//2
-            self.rect.centery = self.y
-            self.vector.y *= -1
+            self.update_speed()
+            self.repousse_autres_ia(ia)
+            distance = self.vector
+            self.x += distance.x
+            self.y += distance.y
+            self.rect.center = (self.x, self.y)
+            if self.x+self.TAILLE//2 >= 1280:
+                self.x = 1280-self.TAILLE//2
+                self.rect.centerx = self.x
+                self.vector.x *= -1
+            elif self.x-self.TAILLE//2 <= 0:
+                self.x = self.TAILLE//2
+                self.rect.centerx = self.x
+                self.vector.x *= -1
+            if self.y+self.TAILLE//2 >= 720:
+                self.y = 720-self.TAILLE//2
+                self.rect.centery = self.y
+                self.vector.y *= -1
+            elif self.y-self.TAILLE//2 <= 0:
+                self.y = self.TAILLE//2
+                self.rect.centery = self.y
+                self.vector.y *= -1
 
     def collision(self, element):
         return self.rect.colliderect(element.rect)
@@ -246,15 +255,15 @@ for joueur in range(12):
         taille = round(30-randint(0, 4))
         champ = 60
         pv = round(3-random())
-        stamina = randint(90, 110)
+        stamina = 1000000000
     else:
         vitesse = round(1.6+random())
         taille = round(30+randint(0, 4))
         champ = 60
         pv = round(3+random())
-        stamina = randint(90, 110)
+        stamina = 1000000000
     group_ia.add(IA(vitesse, taille, champ, pv,
-                 "assets/ia.png", randint(1, 3), stamina))
+                 None, randint(1, 3), stamina))
 
 
 # les stats
@@ -271,6 +280,27 @@ def cote_stat():
         f"Génération : {generation}", 1, (0,)*3), (1420, 300))
     screen.blit(police_stat.render(
         f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320, 350))
+    aff_type_1 = pg.image.load("assets/ia/type1.png")
+    aff_type_2 = pg.image.load("assets/ia/type2.png")
+    aff_type_3 = pg.image.load("assets/ia/type3.png")
+    aff_type_1 = pg.transform.scale(aff_type_1, (40, 40))
+    aff_type_2 = pg.transform.scale(aff_type_2, (40, 40))
+    aff_type_3 = pg.transform.scale(aff_type_3, (40, 40))
+    aff_type_1_shiny = pg.image.load("assets/ia/type1_shiny.png")
+    aff_type_2_shiny = pg.image.load("assets/ia/type2_shiny.png")
+    aff_type_3_shiny = pg.image.load("assets/ia/type3_shiny.png")
+    aff_type_1_shiny = pg.transform.scale(aff_type_1_shiny, (40, 40))
+    aff_type_2_shiny = pg.transform.scale(aff_type_2_shiny, (40, 40))
+    aff_type_3_shiny = pg.transform.scale(aff_type_3_shiny, (40, 40))
+    screen.blit(aff_type_1, (1400, 400))
+    screen.blit(aff_type_2, (1400, 450))
+    screen.blit(aff_type_3, (1400, 500))
+    screen.blit(aff_type_1_shiny, (1350, 400))
+    screen.blit(aff_type_2_shiny, (1350, 450))
+    screen.blit(aff_type_3_shiny, (1350, 500))
+    screen.blit(police_stat.render("IA peureuse", 1, (0,)*3), (1450, 400))
+    screen.blit(police_stat.render("IA courrageuse", 1, (0,)*3), (1450, 450))
+    screen.blit(police_stat.render("IA idiote", 1, (0,)*3), (1450, 500))
 
 
 statia = []
@@ -413,8 +443,13 @@ while running:
                     typeia = best[5]
                 else:
                     typeia = elem[5]
-            group_ia.add(IA(vitesse, taille, 60, pv, "assets/ia.png", typeia, stamina))
-        group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia_shiny.png", best[5], stamina))
+            group_ia.add(IA(vitesse, taille, 60, pv, None, typeia, stamina))
+        if best[5]==1:
+            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type1_shiny.png", best[5], stamina))
+        elif best[5]==2:
+            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type2_shiny.png", best[5], stamina))
+        elif best[5]==3:
+            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type3_shiny.png", best[5], stamina))
 
         generation += 1
 
