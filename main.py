@@ -439,7 +439,7 @@ while running:
             if elem[5] == best[5]:
                 typeia = best[5]
             else:
-                chance = randint(1, 5)
+                chance = randint(1, 10)
                 if chance == 1:
                     typeia = best[5]
                 else:
