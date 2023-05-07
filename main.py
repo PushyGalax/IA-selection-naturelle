@@ -24,8 +24,6 @@ class IA(pg.sprite.Sprite):
         self.image = pg.transform.scale(self.image, (taille, taille))
         self.rect = self.image.get_rect()
 
-        self.target = None
-
         self.x = randint(0, 1280-taille)
         self.y = randint(0, 720-taille)
 
@@ -142,14 +140,14 @@ class IA(pg.sprite.Sprite):
 
     def recherche_plus_proche_monstre(self, monstres):
         min_dist = float("+inf")
-        monstre_proche = None
+        self.monstre_proche = None
         for elt in monstres.sprites():
             dist_monstre = self.distance(elt)
             if dist_monstre <= self.champvision and dist_monstre < min_dist:
                 min_dist = dist_monstre
-                monstre_proche = elt
-        if monstre_proche is not None:
-            self.vector += pg.Vector2(self.x-monstre_proche.x, self.y-monstre_proche.y)
+                self.monstre_proche = elt
+        if self.monstre_proche is not None:
+            self.vector += pg.Vector2(self.x-self.monstre_proche.x, self.y-self.monstre_proche.y)*2
             if self.vector != pg.Vector2(0, 0):
                 self.vector = self.vector.normalize()
 
@@ -162,8 +160,8 @@ class IA(pg.sprite.Sprite):
             if dist_fruit <= self.champvision*5 and dist_fruit < min_dist:
                 min_dist = dist_fruit
                 fruit_proche = elt
-        if fruit_proche is not None:
-            self.vector = pg.Vector2(fruit_proche.rect.centerx-self.x, fruit_proche.rect.centery-self.y)
+        if fruit_proche is not None and self.monstre_proche is None:
+            self.vector += pg.Vector2(fruit_proche.rect.centerx-self.x, fruit_proche.rect.centery-self.y)*2
             if self.vector != pg.Vector2(0, 0):
                 self.vector = self.vector.normalize()
 
