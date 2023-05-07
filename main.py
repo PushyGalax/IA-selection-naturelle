@@ -257,13 +257,13 @@ group_ia = pg.sprite.Group()
 for joueur in range(12):
     chance = randint(1, 2)
     if chance == 1:
-        vitesse = round(1.6-random())
+        vitesse = round(3-random())
         taille = 30-randint(0, 4)
         champ = 80
         pv = round(3-random())
         stamina = 50 - randint(0,10)
     else:
-        vitesse = round(1.6+random())
+        vitesse = round(3+random())
         taille = 30+randint(0, 4)
         champ = 80
         pv = round(3+random())
@@ -428,6 +428,7 @@ while running:
             vitesse = ((best[0]+elem[0])/2)
             taille = (best[1]+elem[1])/2
             pv = (best[3]+elem[3])/2
+            stamina = (best[6]+elem[6])/2
             chance = randint(0, 1)
             if chance == 0:
                 vitesse = max(1, round(vitesse+random()))
