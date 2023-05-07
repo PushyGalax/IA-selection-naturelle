@@ -31,8 +31,8 @@ class IA(pg.sprite.Sprite):
 
         self.rect.center = [self.x, self.y]
         # var ia
-        self.VITESSE = vitesse
-        self.vitesse = vitesse  # bouge (game_speed)
+        self.VITESSE = vitesse # la max
+        self.vitesse = vitesse
         self.vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
         self.vector = self.vector.normalize()
 
@@ -42,6 +42,8 @@ class IA(pg.sprite.Sprite):
         self.TAILLE = taille
         self.champvision = champvision
         self.typeia = typeia
+
+        self.STAMINA = stamina # le max
         self.stamina = stamina
 
         self.pv = pv
@@ -55,6 +57,15 @@ class IA(pg.sprite.Sprite):
         statact = [self.VITESSE, self.TAILLE,
                    self.champvision, self.pv, self.pvmax, self.timer]
         return statact
+
+    def draw_hp(self):
+        screen.blit(self.pv_text, (self.rect.x-8, self.rect.centery-self.TAILLE))
+
+    def draw_stamina(self):
+        stamina_rect = pg.Rect(self.x-self.TAILLE/2,self.y+self.TAILLE/2+2,self.stamina/self.STAMINA*self.TAILLE+2,2)
+        rect_fond = pg.Rect(self.x-self.TAILLE/2,self.y+self.TAILLE/2+2,self.TAILLE+2,2)
+        pg.draw.rect(screen, (0,0,200), rect_fond)
+        pg.draw.rect(screen, (0,255,255), stamina_rect)
 
     def degat(self, monstres):
         for elt in monstres.sprites():
@@ -73,8 +84,7 @@ class IA(pg.sprite.Sprite):
 
     def update_speed(self):
         if default_timer() - self.change_direction_timer > uniform(0.2, 1.0) and self.stamina > 0:
-            new_vector = pg.Vector2(
-                choice((-random(), random())), choice((-random(), random())))
+            new_vector = pg.Vector2(choice((-random(), random())), choice((-random(), random())))
             new_vector = new_vector.normalize() / 2
             self.vector += new_vector
             current_speed = self.get_speed()
@@ -83,14 +93,12 @@ class IA(pg.sprite.Sprite):
             self.change_direction_timer = default_timer()
             self.stamina -= current_speed
 
-
     def move(self, monstres, fruits, ia):
         if self.stamina <= 0:
             self.pv = 0
             return
         self.degat(monstres)
         self.miam(fruits)
-
         if self.typeia == 1:
             self.recherche_plus_proche_monstre(monstres)
         elif self.typeia == 2:
@@ -141,8 +149,7 @@ class IA(pg.sprite.Sprite):
                 min_dist = dist_monstre
                 monstre_proche = elt
         if monstre_proche is not None:
-            self.vector = pg.Vector2(
-                self.x-monstre_proche.x, self.y-monstre_proche.y)
+            self.vector += pg.Vector2(self.x-monstre_proche.x, self.y-monstre_proche.y)
             if self.vector != pg.Vector2(0, 0):
                 self.vector = self.vector.normalize()
 
@@ -152,12 +159,11 @@ class IA(pg.sprite.Sprite):
         for elt in fruits.sprites():
             dist_fruit = self.distance(elt)
             # changer la distance de detection des fruits, 3* plus grande que pour detecte monstres
-            if dist_fruit <= 180 and dist_fruit < min_dist:
+            if dist_fruit <= self.champvision*5 and dist_fruit < min_dist:
                 min_dist = dist_fruit
                 fruit_proche = elt
         if fruit_proche is not None:
-            self.vector = pg.Vector2(
-                self.x-fruit_proche.rect.centerx, self.y-fruit_proche.rect.centery)
+            self.vector = pg.Vector2(self.x-fruit_proche.rect.centerx, self.y-fruit_proche.rect.centery)
             if self.vector != pg.Vector2(0, 0):
                 self.vector = self.vector.normalize()
 
@@ -166,8 +172,11 @@ class IA(pg.sprite.Sprite):
             if self.collision(elt):
                 group_fruits.remove(elt)
                 self.pv += 1
+                self.stamina += self.STAMINA * 0.2
                 if self.pv < self.pvmax:
                     self.pvmax = self.pv
+                if self.stamina>self.STAMINA:
+                    self.stamina = self.STAMINA
                 self.pv_text = police.render(str(self.pv)+" PV", 1, (255,)*3)
 
 
@@ -251,16 +260,16 @@ for joueur in range(12):
     chance = randint(1, 2)
     if chance == 1:
         vitesse = round(1.6-random())
-        taille = round(30-randint(0, 4))
-        champ = 60
+        taille = 30-randint(0, 4)
+        champ = 80
         pv = round(3-random())
-        stamina = 10
+        stamina = 50 - randint(0,10)
     else:
         vitesse = round(1.6+random())
-        taille = round(30+randint(0, 4))
-        champ = 60
+        taille = 30+randint(0, 4)
+        champ = 80
         pv = round(3+random())
-        stamina = 10
+        stamina = 50 + randint(0,10)
     group_ia.add(IA(vitesse, taille, champ, pv,
                  None, randint(1, 3), stamina))
 
@@ -286,8 +295,10 @@ aff_type_3_shiny = pg.transform.scale(aff_type_3_shiny, (40, 40))
 def cote_stat():
     screen.fill("#A0A0A0", (1280, 0, 1780, 720))
     screen.blit(texte_stats, (1410, 50))
-    screen.blit(police_stat.render(f"Génération : {generation}", 1, (0,)*3), (1420, 300))
-    screen.blit(police_stat.render(f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320, 350))
+    screen.blit(police_stat.render(
+        f"Génération : {generation}", 1, (0,)*3), (1420, 300))
+    screen.blit(police_stat.render(
+        f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320, 350))
     screen.blit(aff_type_1, (1400, 400))
     screen.blit(aff_type_2, (1400, 450))
     screen.blit(aff_type_3, (1400, 500))
@@ -369,6 +380,9 @@ with open('type.csv', 'w') as csvfile:
     csvwrite.writeheader()
 
 
+
+
+## BOUCLE DU JEU ##
 while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -384,14 +398,12 @@ while running:
 
     for elt in group_ia.sprites():
         elt.move(group_monstre, group_fruits, group_ia)
-        screen.blit(elt.pv_text, (elt.rect.x-8, elt.rect.centery-elt.TAILLE))
+        elt.draw_hp()
+        elt.draw_stamina()
 
     if len(ia_list) != 0:
         for elem in ia_list:
-            stat = elem.__str__()
-            # print(stat)
-            pv = stat[3]
-            if pv == 0:
+            if elem.pv <= 0:
                 mort = elem.fin()
                 statia.append(mort)
                 group_ia.remove(elem)
