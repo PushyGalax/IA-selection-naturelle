@@ -89,6 +89,8 @@ class IA(pg.sprite.Sprite):
             self.slow_down()
 
     def move(self, monstres, fruits, ia):
+        if stamina == 0:
+            self.pv = 0
         self.degat(monstres)
         self.miam(fruits)
         if self.stamina > 0:
@@ -271,7 +273,18 @@ bordure = pg.image.load("assets/bordure.png")
 bordure = pg.transform.scale(bordure, (16, 720))
 texte_stats = pg.image.load("assets/texte_stats.png")
 texte_stats = pg.transform.scale(texte_stats, (256, 64))
-
+aff_type_1 = pg.image.load("assets/ia/type1.png")
+aff_type_2 = pg.image.load("assets/ia/type2.png")
+aff_type_3 = pg.image.load("assets/ia/type3.png")
+aff_type_1 = pg.transform.scale(aff_type_1, (40, 40))
+aff_type_2 = pg.transform.scale(aff_type_2, (40, 40))
+aff_type_3 = pg.transform.scale(aff_type_3, (40, 40))
+aff_type_1_shiny = pg.image.load("assets/ia/type1_shiny.png")
+aff_type_2_shiny = pg.image.load("assets/ia/type2_shiny.png")
+aff_type_3_shiny = pg.image.load("assets/ia/type3_shiny.png")
+aff_type_1_shiny = pg.transform.scale(aff_type_1_shiny, (40, 40))
+aff_type_2_shiny = pg.transform.scale(aff_type_2_shiny, (40, 40))
+aff_type_3_shiny = pg.transform.scale(aff_type_3_shiny, (40, 40))
 
 def cote_stat():
     screen.fill("#A0A0A0", (1280, 0, 1780, 720))
@@ -280,18 +293,6 @@ def cote_stat():
         f"Génération : {generation}", 1, (0,)*3), (1420, 300))
     screen.blit(police_stat.render(
         f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320, 350))
-    aff_type_1 = pg.image.load("assets/ia/type1.png")
-    aff_type_2 = pg.image.load("assets/ia/type2.png")
-    aff_type_3 = pg.image.load("assets/ia/type3.png")
-    aff_type_1 = pg.transform.scale(aff_type_1, (40, 40))
-    aff_type_2 = pg.transform.scale(aff_type_2, (40, 40))
-    aff_type_3 = pg.transform.scale(aff_type_3, (40, 40))
-    aff_type_1_shiny = pg.image.load("assets/ia/type1_shiny.png")
-    aff_type_2_shiny = pg.image.load("assets/ia/type2_shiny.png")
-    aff_type_3_shiny = pg.image.load("assets/ia/type3_shiny.png")
-    aff_type_1_shiny = pg.transform.scale(aff_type_1_shiny, (40, 40))
-    aff_type_2_shiny = pg.transform.scale(aff_type_2_shiny, (40, 40))
-    aff_type_3_shiny = pg.transform.scale(aff_type_3_shiny, (40, 40))
     screen.blit(aff_type_1, (1400, 400))
     screen.blit(aff_type_2, (1400, 450))
     screen.blit(aff_type_3, (1400, 500))
