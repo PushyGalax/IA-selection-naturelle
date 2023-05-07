@@ -55,7 +55,7 @@ class IA(pg.sprite.Sprite):
 
     def __str__(self):
         statact = [self.VITESSE, self.TAILLE,
-                   self.champvision, self.pv, self.pvmax, self.timer]
+                   self.champvision, self.pv, self.pvmax, self.timer, self.STAMINA]
         return statact
 
     def draw_hp(self):
@@ -77,7 +77,7 @@ class IA(pg.sprite.Sprite):
     def fin(self):
         time = default_timer()
         self.timer = time - self.timer
-        return [self.VITESSE, self.TAILLE, self.champvision, self.pvmax, self.timer, self.typeia, stamina]
+        return [self.VITESSE, self.TAILLE, self.champvision, self.pvmax, self.timer, self.typeia, self.STAMINA]
 
     def get_speed(self):
         return sqrt(self.vector.x**2 + self.vector.y**2)
@@ -163,7 +163,7 @@ class IA(pg.sprite.Sprite):
                 min_dist = dist_fruit
                 fruit_proche = elt
         if fruit_proche is not None:
-            self.vector = pg.Vector2(self.x-fruit_proche.rect.centerx, self.y-fruit_proche.rect.centery)
+            self.vector = pg.Vector2(fruit_proche.rect.centerx-self.x, fruit_proche.rect.centery-self.y)
             if self.vector != pg.Vector2(0, 0):
                 self.vector = self.vector.normalize()
 
@@ -332,7 +332,8 @@ def csv_ecrit():
         info = {"generation": generation,
                 "vitesse": moyenne(0),
                 "taille": moyenne(1),
-                "pv": moyenne(4)}
+                "pv": moyenne(4),
+                "stamina": moyenne(6)}
         csvwrite.writerow(info)
 
     with open('tempsia.csv', 'a') as csvfile:
@@ -357,7 +358,7 @@ tai = moyenne(1)
 hp = moyenne(4)
 
 
-fieldnames = ['generation', "vitesse", "taille", "pv"]
+fieldnames = ['generation', "vitesse", "taille", "pv", "stamina"]
 fieldnames2 = ["generation", "tempsmin", "tempsmax", "tempsmoy"]
 fieldnames3 = ["generation", "type1", "type2", "type3"]
 
@@ -444,6 +445,11 @@ while running:
                 pv = max(1, round(pv + random()))
             else:
                 pv = max(1, round(pv - random()))
+            chance = randint(0,1)
+            if chance == 0:
+                stamina = max(20, round(stamina + randint(0,7)))
+            else:
+                stamina = max(20, round(stamina - randint(0,7)))
             if elem[5] == best[5]:
                 typeia = best[5]
             else:
@@ -454,12 +460,16 @@ while running:
                     typeia = elem[5]
             group_ia.add(IA(vitesse, taille, 60, pv, None, typeia, stamina))
         if best[5]==1:
-            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type1_shiny.png", best[5], stamina))
+            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type1_shiny.png", best[5], best[6]))
         elif best[5]==2:
-            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type2_shiny.png", best[5], stamina))
+            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type2_shiny.png", best[5], best[6]))
         elif best[5]==3:
-            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type3_shiny.png", best[5], stamina))
+            group_ia.add(IA(best[0], best[1], best[2], best[3], "assets/ia/type3_shiny.png", best[5], best[6]))
 
+        for elem in group_fruits.sprites():
+            group_fruits.remove(elem)
+        for i in range(5):
+            group_fruits.add(fruit())
         generation += 1
 
         csv_ecrit()
