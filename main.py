@@ -71,9 +71,6 @@ class IA(pg.sprite.Sprite):
     def get_speed(self):
         return sqrt(self.vector.x**2 + self.vector.y**2)
 
-    def slow_down(self):
-        self.vector = self.vector.move_towards(pg.Vector2(0, 0), 0.2)
-
     def update_speed(self):
         if default_timer() - self.change_direction_timer > uniform(0.2, 1.0) and self.stamina > 0:
             new_vector = pg.Vector2(
@@ -85,42 +82,42 @@ class IA(pg.sprite.Sprite):
                 self.vector = self.vector.normalize() * self.VITESSE
             self.change_direction_timer = default_timer()
             self.stamina -= current_speed
-        elif self.stamina <= 0:
-            self.slow_down()
+
 
     def move(self, monstres, fruits, ia):
-        if stamina == 0:
+        if self.stamina <= 0:
             self.pv = 0
+            return
         self.degat(monstres)
         self.miam(fruits)
-        if self.stamina > 0:
-            if self.typeia == 1:
-                self.recherche_plus_proche_monstre(monstres)
-            elif self.typeia == 2:
-                self.recherche_plus_proche_monstre(monstres)
-                self.recherche_plus_proche_fruit(fruits)
-            self.update_speed()
-            self.repousse_autres_ia(ia)
-            distance = self.vector
-            self.x += distance.x
-            self.y += distance.y
-            self.rect.center = (self.x, self.y)
-            if self.x+self.TAILLE//2 >= 1280:
-                self.x = 1280-self.TAILLE//2
-                self.rect.centerx = self.x
-                self.vector.x *= -1
-            elif self.x-self.TAILLE//2 <= 0:
-                self.x = self.TAILLE//2
-                self.rect.centerx = self.x
-                self.vector.x *= -1
-            if self.y+self.TAILLE//2 >= 720:
-                self.y = 720-self.TAILLE//2
-                self.rect.centery = self.y
-                self.vector.y *= -1
-            elif self.y-self.TAILLE//2 <= 0:
-                self.y = self.TAILLE//2
-                self.rect.centery = self.y
-                self.vector.y *= -1
+
+        if self.typeia == 1:
+            self.recherche_plus_proche_monstre(monstres)
+        elif self.typeia == 2:
+            self.recherche_plus_proche_monstre(monstres)
+            self.recherche_plus_proche_fruit(fruits)
+        self.update_speed()
+        self.repousse_autres_ia(ia)
+        distance = self.vector
+        self.x += distance.x
+        self.y += distance.y
+        self.rect.center = (self.x, self.y)
+        if self.x+self.TAILLE//2 >= 1280:
+            self.x = 1280-self.TAILLE//2
+            self.rect.centerx = self.x
+            self.vector.x *= -1
+        elif self.x-self.TAILLE//2 <= 0:
+            self.x = self.TAILLE//2
+            self.rect.centerx = self.x
+            self.vector.x *= -1
+        if self.y+self.TAILLE//2 >= 720:
+            self.y = 720-self.TAILLE//2
+            self.rect.centery = self.y
+            self.vector.y *= -1
+        elif self.y-self.TAILLE//2 <= 0:
+            self.y = self.TAILLE//2
+            self.rect.centery = self.y
+            self.vector.y *= -1
 
     def collision(self, element):
         return self.rect.colliderect(element.rect)
@@ -257,13 +254,13 @@ for joueur in range(12):
         taille = round(30-randint(0, 4))
         champ = 60
         pv = round(3-random())
-        stamina = 1000000000
+        stamina = 10
     else:
         vitesse = round(1.6+random())
         taille = round(30+randint(0, 4))
         champ = 60
         pv = round(3+random())
-        stamina = 1000000000
+        stamina = 10
     group_ia.add(IA(vitesse, taille, champ, pv,
                  None, randint(1, 3), stamina))
 
@@ -289,10 +286,8 @@ aff_type_3_shiny = pg.transform.scale(aff_type_3_shiny, (40, 40))
 def cote_stat():
     screen.fill("#A0A0A0", (1280, 0, 1780, 720))
     screen.blit(texte_stats, (1410, 50))
-    screen.blit(police_stat.render(
-        f"Génération : {generation}", 1, (0,)*3), (1420, 300))
-    screen.blit(police_stat.render(
-        f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320, 350))
+    screen.blit(police_stat.render(f"Génération : {generation}", 1, (0,)*3), (1420, 300))
+    screen.blit(police_stat.render(f"Nombre d'IA restantes : {len(ia_list)}", 1, (0,)*3), (1320, 350))
     screen.blit(aff_type_1, (1400, 400))
     screen.blit(aff_type_2, (1400, 450))
     screen.blit(aff_type_3, (1400, 500))
@@ -394,6 +389,7 @@ while running:
     if len(ia_list) != 0:
         for elem in ia_list:
             stat = elem.__str__()
+            # print(stat)
             pv = stat[3]
             if pv == 0:
                 mort = elem.fin()
